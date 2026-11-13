@@ -10,7 +10,7 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 
 | Etap | Zakres | Stan |
 |---|---|---|
-| 1 | Struktura projektu, generator labiryntu, ruch, kotek, domek, plansza z rysunkami, strzałki, palec, klawiatura, „Brawo” | gotowy, czeka na pierwszą kompilację w Xcode |
+| 1 | Struktura projektu, generator labiryntu, ruch, kotek, domek, plansza z rysunkami, strzałki, palec, klawiatura, „Brawo” | gotowy, działa w symulatorze (iPhone 17, iOS 26.5) |
 | 2 | Krzaczek i serduszko (logika jest), przedmioty, podpowiedź stopniowana, porównanie drogi | w części |
 | 3 | Tryb „Zaplanuj drogę z robotem” | do zrobienia |
 | 4 | Ekran startowy 1:1, szafa z koszulkami, menu, „O grze”, dźwięk i muzyka | do zrobienia |

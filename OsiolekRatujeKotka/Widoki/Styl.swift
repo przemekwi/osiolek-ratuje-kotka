@@ -75,6 +75,7 @@ struct PrzyciskKreska: ButtonStyle {
             .font(.kreda(maly ? 17 : 22))
             .foregroundStyle(Kolory.napisPrzycisku)
             .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, maly ? 14 : 24)
             .padding(.vertical, maly ? 6 : 10)
             .frame(minHeight: maly ? 46 : 56)

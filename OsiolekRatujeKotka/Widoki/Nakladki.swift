@@ -57,7 +57,7 @@ struct Brawo: View {
             Text(stan.wynikBrawo).font(.kreda(18, gruby: false))
             Text(stan.wynikPodp).font(.kreda(18, gruby: false)).multilineTextAlignment(.center)
             if let d = stan.wynikDrogi { Text(d).font(.kreda(18, gruby: false)).multilineTextAlignment(.center) }
-            HStack(spacing: 12) {
+            Rzad {
                 Button(stan.t("nastepny")) { stan.nastepnyPoziom() }.buttonStyle(.kreska)
                 Button { stan.nakladka = .menu; stan.gra.pauza = true } label: {
                     HStack(spacing: 6) { IkonaDziecka(id: "menu").frame(width: 24, height: 24); Text(stan.t("menu")) }
@@ -124,14 +124,34 @@ struct WyborJezyka: View {
     @Environment(StanGry.self) private var stan
     var body: some View {
         @Bindable var stan = stan
-        Picker(stan.t("jezyk"), selection: $stan.jezyk) {
-            ForEach(Teksty.jezyki, id: \.self) { Text(Teksty.nazwa($0)).tag($0) }
+        // Menu z własną etykietą: etykieta zwykłego Pickera nie przyjmuje fontu gry.
+        Menu {
+            Picker(stan.t("jezyk"), selection: $stan.jezyk) {
+                ForEach(Teksty.jezyki, id: \.self) { Text(Teksty.nazwa($0)).tag($0) }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(Teksty.nazwa(stan.jezyk))
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 13, weight: .bold))
+            }
+            .font(.kreda(17))
+            .foregroundStyle(Kolory.tekst)
+            .padding(.horizontal, 14).frame(minHeight: 44)
+            .kreska(Kolory.karta)
         }
-        .pickerStyle(.menu)
-        .tint(Kolory.tekst)
-        .font(.kreda(17))
-        .padding(.horizontal, 14).frame(minHeight: 44)
-        .kreska(Kolory.karta)
         .accessibilityLabel(stan.t("jezyk"))
+        .accessibilityValue(Teksty.nazwa(stan.jezyk))
+    }
+}
+
+/// Rząd przycisków, który na wąskim ekranie układa się w kolumnę (jak `.rzad` z zawijaniem w grze),
+/// zamiast ucinać napisy.
+struct Rzad<Tresc: View>: View {
+    @ViewBuilder var tresc: Tresc
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) { tresc }
+            VStack(spacing: 12) { tresc }
+        }
     }
 }
