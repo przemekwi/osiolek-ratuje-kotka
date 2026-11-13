@@ -211,21 +211,30 @@ struct Strzalki: View {
     @Environment(StanGry.self) private var stan
     /// Niski ekran poziomo: mniejsze przyciski (jak w grze), żeby plansza dostała więcej miejsca.
     var kompakt = false
+    /// Kierunek trzymany palcem (podświetla przycisk).
+    @State private var wcisniety: Kierunek?
+    /// Prostokąty przycisków w układzie krzyżaka (do zamiany punktu dotyku na kierunek).
+    @State private var ramki: [Kierunek: CGRect] = [:]
+    private let przestrzen = "krzyzak"
 
     var body: some View {
         VStack(spacing: 6) {
             Grid(horizontalSpacing: 6, verticalSpacing: 6) {
                 GridRow {
                     Color.clear.frame(width: 1, height: 1)
-                    PrzyciskStrzalki(kierunek: .gora, napis: stan.t("gora"), kompakt: kompakt)
+                    przycisk(.gora, "gora")
                     Color.clear.frame(width: 1, height: 1)
                 }
                 GridRow {
-                    PrzyciskStrzalki(kierunek: .lewo, napis: stan.t("lewo"), kompakt: kompakt)
-                    PrzyciskStrzalki(kierunek: .dol, napis: stan.t("dol"), kompakt: kompakt)
-                    PrzyciskStrzalki(kierunek: .prawo, napis: stan.t("prawo"), kompakt: kompakt)
+                    przycisk(.lewo, "lewo")
+                    przycisk(.dol, "dol")
+                    przycisk(.prawo, "prawo")
                 }
             }
+            .coordinateSpace(.named(przestrzen))
+            // Dotyk przez UIKit (touchesBegan/Moved/Ended): bez opóźnienia rozpoznawania gestu SwiftUI;
+            // przesunięcie palca na inną strzałkę od razu zmienia kierunek, jak krzyżak w padzie.
+            .overlay { DotykKrzyzaka(ramki: ramki, zmiana: zmienKierunek).accessibilityHidden(true) }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(stan.t("strzalki"))
             Text(stan.t("sterDotyk"))
@@ -233,78 +242,80 @@ struct Strzalki: View {
                 .foregroundStyle(Kolory.ciche)
                 .multilineTextAlignment(.center)
         }
+        .onDisappear { zmienKierunek(nil) }
     }
-}
 
-struct PrzyciskStrzalki: View {
-    @Environment(StanGry.self) private var stan
-    let kierunek: Kierunek
-    let napis: String
-    var kompakt = false
-    @State private var wcisniety = false
+    private func zmienKierunek(_ k: Kierunek?) {
+        guard k != wcisniety else { return }
+        wcisniety = k
+        if let k, stan.nakladka == nil { stan.gra.trzymaj("przycisk", k.rawValue) } else { stan.gra.pusc("przycisk") }
+    }
 
-    var body: some View {
-        VStack(spacing: 0) {
-            IkonaDziecka(id: "strzalka", kierunek: kierunek).frame(width: kompakt ? 22 : 28, height: kompakt ? 22 : 28)
+    private func przycisk(_ k: Kierunek, _ klucz: String) -> some View {
+        let napis = stan.t(klucz), w = wcisniety == k
+        return VStack(spacing: 0) {
+            IkonaDziecka(id: "strzalka", kierunek: k).frame(width: kompakt ? 22 : 28, height: kompakt ? 22 : 28)
             Text(napis).font(.kreda(kompakt ? 12 : 14))
         }
         .foregroundStyle(Kolory.napisPrzycisku)
         .frame(width: kompakt ? 74 : 90, height: kompakt ? 50 : 62)
         .kreska(Kolory.niebieski)
-        .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 0 : 2, y: wcisniety ? 0 : 3))
-        .offset(y: wcisniety ? 2 : 0)
-        .contentShape(KsztaltKreski())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    guard !wcisniety else { return }
-                    wcisniety = true
-                    if stan.nakladka == nil { stan.gra.trzymaj("przycisk:\(kierunek)", kierunek.rawValue) }
-                }
-                .onEnded { _ in
-                    wcisniety = false
-                    stan.gra.pusc("przycisk:\(kierunek)")
-                }
-        )
+        .background(KsztaltKreski().fill(Kolory.cien).offset(x: w ? 0 : 2, y: w ? 0 : 3))
+        .offset(y: w ? 2 : 0)
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(przestrzen)) } action: { ramki[k] = $0 }
         .accessibilityElement()
         .accessibilityLabel(napis)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
             // VoiceOver: jedno stuknięcie to jeden krok.
-            stan.gra.trzymaj("przycisk:\(kierunek)", kierunek.rawValue)
-            stan.gra.pusc("przycisk:\(kierunek)")
+            stan.gra.trzymaj("przycisk:\(k)", k.rawValue)
+            stan.gra.pusc("przycisk:\(k)")
         }
     }
 }
 
-/// „Podpowiedź”: przez odliczanie przycisk wypełnia się jak pasek, a żarówka jest blada; gdy podpowiedź jest gotowa,
-/// żarówka raz się rozjaśnia (jak `#podpowiedz.laduje` i `.blysk` w grze).
-struct PrzyciskPodpowiedzi: View {
-    @Environment(StanGry.self) private var stan
-    @Environment(\.colorScheme) private var schemat
-    @Environment(\.accessibilityReduceMotion) private var ograniczRuch
+/// Przezroczysta warstwa nad strzałkami, która od razu przekazuje dotyk (wiele palców: liczy się ostatni).
+struct DotykKrzyzaka: UIViewRepresentable {
+    let ramki: [Kierunek: CGRect]
+    let zmiana: (Kierunek?) -> Void
 
-    var body: some View {
-        let laduje = stan.podpZa > 0
-        let p = stan.podpPasek
-        // W motywie ciemnym niewypełniona część jest jasna, żeby napis był czytelny.
-        let reszta = schemat == .dark ? Kolory.ciche : Kolory.karta
-        let pasek = LinearGradient(stops: [.init(color: Kolory.zielony, location: 0), .init(color: Kolory.zielony, location: p),
-                                           .init(color: reszta, location: p), .init(color: reszta, location: 1)],
-                                   startPoint: .leading, endPoint: .trailing)
-        Button { stan.pokazPodpowiedz() } label: {
-            HStack(spacing: 6) {
-                IkonaDziecka(id: "podpowiedz")
-                    .frame(width: 26, height: 26)
-                    .opacity(laduje ? 0.35 : 1)
-                    .phaseAnimator([0.0, 0.5, 0.0], trigger: stan.podpGotowa) { v, b in v.brightness(ograniczRuch ? 0 : b) }
-                Text(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : stan.t("podpowiedz"))
-                    .monospacedDigit()
-                    .napisPaska()
-            }
+    func makeUIView(context: Context) -> Widok {
+        let v = Widok()
+        v.isMultipleTouchEnabled = true
+        v.backgroundColor = .clear
+        return v
+    }
+
+    func updateUIView(_ v: Widok, context: Context) {
+        v.ramki = ramki
+        v.zmiana = zmiana
+    }
+
+    final class Widok: UIView {
+        var ramki: [Kierunek: CGRect] = [:]
+        var zmiana: ((Kierunek?) -> Void)?
+        private var palce: [(UITouch, Kierunek?)] = []
+
+        private func kierunek(_ p: CGPoint) -> Kierunek? {
+            // Lekki zapas wokół przycisków: mały palec nie musi trafić idealnie.
+            ramki.first { $0.value.insetBy(dx: -6, dy: -6).contains(p) }?.key
         }
-        .buttonStyle(PrzyciskKreska(kolor: Kolory.zielony, maly: true, wypelnienie: laduje ? AnyShapeStyle(pasek) : nil))
-        .accessibilityHint(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : "")
+
+        private func odswiez() { zmiana?(palce.last(where: { $0.1 != nil })?.1) }
+
+        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            for t in touches { palce.append((t, kierunek(t.location(in: self)))) }
+            odswiez()
+        }
+        override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            for t in touches { if let i = palce.firstIndex(where: { $0.0 === t }) { palce[i].1 = kierunek(t.location(in: self)) } }
+            odswiez()
+        }
+        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+            palce.removeAll { p in touches.contains { $0 === p.0 } }
+            odswiez()
+        }
+        override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { touchesEnded(touches, with: event) }
     }
 }
 
