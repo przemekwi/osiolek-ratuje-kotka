@@ -12,7 +12,7 @@ struct NakladkiGry: View {
                 ScrollView {
                     Group {
                         switch n {
-                        case .menu: MenuPauzy()
+                        case .menu: MenuPauzy(rozmiarEkranu: geo.size)
                         case .brawo: Brawo(rozmiarEkranu: geo.size)
                         case .album: OknoAlbumu(rozmiarEkranu: geo.size)
                         }
@@ -30,8 +30,52 @@ struct NakladkiGry: View {
 
 struct MenuPauzy: View {
     @Environment(StanGry.self) private var stan
+    let rozmiarEkranu: CGSize
 
     var body: some View {
+        if rozmiarEkranu.width > rozmiarEkranu.height && rozmiarEkranu.height <= 700 {
+            // Telefon poziomo: przyciski parami w dwóch kolumnach, „Graj dalej” na całą szerokość (jak `#menu` w grze).
+            Panel(maksSzerokosc: 760) {
+                Text(stan.t("pauza")).font(.kreda(20)).foregroundStyle(Kolory.tekst)
+                Grid(horizontalSpacing: 12, verticalSpacing: 6) {
+                    GridRow {
+                        Button { stan.wznow() } label: { Text(stan.t("grajDalej")).frame(maxWidth: .infinity) }
+                            .buttonStyle(.kreska(Kolory.zolty, maly: true))
+                            .gridCellColumns(2)
+                    }
+                    GridRow {
+                        Button { stan.nowaGra() } label: { Text(stan.t("nowaGra")).frame(maxWidth: .infinity) }
+                            .buttonStyle(.kreska(Kolory.zielony, maly: true))
+                        przebierz
+                    }
+                    GridRow {
+                        PrzyciskMuzyki()
+                        PrzyciskDzwiekow()
+                    }
+                    GridRow {
+                        PrzelacznikMotywu()
+                        WyborJezyka()
+                    }
+                    GridRow {
+                        Button { stan.doStartu() } label: { Text(stan.t("wyjdz")).frame(maxWidth: .infinity) }
+                            .buttonStyle(.kreska(Kolory.zielony, maly: true))
+                            .gridCellColumns(2)
+                    }
+                }
+            }
+        } else {
+            menuPionowe
+        }
+    }
+
+    private var przebierz: some View {
+        Button { stan.przebierz() } label: {
+            HStack(spacing: 6) { IkonaKoszulki().frame(width: 26, height: 26); Text(stan.t("przebierz")) }.frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.kreska(Kolory.rozowy, maly: true))
+    }
+
+    private var menuPionowe: some View {
         Panel {
             Text(stan.t("pauza")).font(.kreda(30)).foregroundStyle(Kolory.tekst)
             VStack(spacing: 12) {
@@ -145,16 +189,29 @@ struct ObrazBrawo: View {
 
 /// „Muzyka: włączona/wyłączona” i „Dźwięki: włączone/wyłączone”.
 struct PrzelacznikiDzwieku: View {
-    @Environment(StanGry.self) private var stan
     var body: some View {
         Rzad {
-            Button(stan.t(stan.muzyka ? "muzykaWl" : "muzykaWyl")) { stan.muzyka.toggle(); stan.klik() }
-                .buttonStyle(.kreska(Kolory.niebieski, maly: true))
-                .accessibilityAddTraits(stan.muzyka ? .isSelected : [])
-            Button(stan.t(stan.dzwieki ? "dzwiekiWl" : "dzwiekiWyl")) { stan.dzwieki.toggle(); stan.klik() }
-                .buttonStyle(.kreska(Kolory.niebieski, maly: true))
-                .accessibilityAddTraits(stan.dzwieki ? .isSelected : [])
+            PrzyciskMuzyki()
+            PrzyciskDzwiekow()
         }
+    }
+}
+
+struct PrzyciskMuzyki: View {
+    @Environment(StanGry.self) private var stan
+    var body: some View {
+        Button(stan.t(stan.muzyka ? "muzykaWl" : "muzykaWyl")) { stan.muzyka.toggle(); stan.klik() }
+            .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+            .accessibilityAddTraits(stan.muzyka ? .isSelected : [])
+    }
+}
+
+struct PrzyciskDzwiekow: View {
+    @Environment(StanGry.self) private var stan
+    var body: some View {
+        Button(stan.t(stan.dzwieki ? "dzwiekiWl" : "dzwiekiWyl")) { stan.dzwieki.toggle(); stan.klik() }
+            .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+            .accessibilityAddTraits(stan.dzwieki ? .isSelected : [])
     }
 }
 
