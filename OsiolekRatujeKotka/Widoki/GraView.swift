@@ -11,7 +11,9 @@ struct GraView: View {
         GeometryReader { geo in
             let bok = geo.size.width > geo.size.height && geo.size.height <= 700
             VStack(spacing: 8) {
-                PasekGry()
+                // Układ paska zależy tylko od szerokości ekranu, nie od długości napisów (inaczej odliczanie
+                // podpowiedzi przełączało pasek na dwa wiersze i plansza zmieniała rozmiar).
+                PasekGry(jedenWiersz: geo.size.width >= 680)
                 if bok {
                     HStack(spacing: 8) {
                         PlanszaView(ciemny: schemat == .dark)
@@ -59,20 +61,24 @@ struct GraView: View {
 /// Pasek: poziom, zadanie, czas, przedmioty do zebrania i menu.
 struct PasekGry: View {
     @Environment(StanGry.self) private var stan
+    let jedenWiersz: Bool
 
     // Jak w grze w trybie dla dziecka: poziom i przedmioty w pierwszym wierszu, zadanie pod spodem
     // w kolorze wyróżnienia; bez zegara (tryb dla dziecka ukrywa czas).
     var body: some View {
         // Szeroki ekran: napisy i przyciski w jednym wierszu; wąski (telefon pionowo): przyciski pod napisami, jak w grze.
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 14) {
-                napisy
-                Spacer(minLength: 4)
-                przyciski
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                napisy
-                HStack(spacing: 8) { przyciski }.frame(maxWidth: .infinity)
+        Group {
+            if jedenWiersz {
+                HStack(alignment: .center, spacing: 14) {
+                    napisy
+                    Spacer(minLength: 4)
+                    przyciski
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    napisy
+                    HStack(spacing: 8) { przyciski }.frame(maxWidth: .infinity)
+                }
             }
         }
         .frame(maxWidth: 1200)
@@ -348,9 +354,14 @@ struct PrzyciskPodpowiedzi: View {
                     .frame(width: 26, height: 26)
                     .opacity(laduje ? 0.35 : 1)
                     .phaseAnimator([0.0, 0.5, 0.0], trigger: stan.podpGotowa) { v, b in v.brightness(ograniczRuch ? 0 : b) }
-                Text(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : stan.t("podpowiedz"))
-                    .monospacedDigit()
-                    .napisPaska()
+                // Stała szerokość: niewidoczny najdłuższy napis rezerwuje miejsce, więc odliczanie nie zmienia rozmiaru przycisku.
+                ZStack {
+                    Text(stan.t("podpZa", ["s": 25])).monospacedDigit().napisPaska().hidden()
+                    Text(stan.t("podpowiedz")).napisPaska().hidden()
+                    Text(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : stan.t("podpowiedz"))
+                        .monospacedDigit()
+                        .napisPaska()
+                }
             }
         }
         .buttonStyle(PrzyciskKreska(kolor: Kolory.zielony, maly: true, wypelnienie: laduje ? AnyShapeStyle(pasek) : nil))
