@@ -13,8 +13,8 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 | 1 | Struktura projektu, generator labiryntu, ruch, kotek, domek, plansza z rysunkami, strzałki, palec, klawiatura, „Brawo” | gotowy, działa w symulatorze (iPhone 17, iOS 26.5) |
 | 2 | Krzaczek i serduszko, przedmioty, podpowiedź stopniowana z odliczaniem, porównanie drogi, dźwięki i muzyka | gotowy do sprawdzenia; brakuje wyjaśnienia krzaczka |
 | 3 | Tryb „Zaplanuj drogę z robotem” | do zrobienia |
-| 4 | Ekran startowy 1:1, szafa z koszulkami, menu, „O grze”, dźwięk i muzyka | do zrobienia |
-| 5 | Album naklejek, koniec rozdziału co 5 poziomów | do zrobienia |
+| 4 | Ekran startowy 1:1, szafa z koszulkami, menu, „O grze” | szafa i menu gotowe do sprawdzenia; brakuje „O grze” i przycisku trybu z robotem |
+| 5 | Album naklejek, koniec rozdziału co 5 poziomów | album gotowy do sprawdzenia; brakuje końca rozdziału |
 | 6 | Limit czasu i przerwa z pytaniem dla rodzica, zapis ostatniego punktu | do zrobienia |
 
 Poza zakresem (decyzja właściciela): gra „Osiołek rozsypał karty” (osobna gra), udostępnianie i linki do witryny,
@@ -55,9 +55,11 @@ node narzedzia/ikona.mjs ../gry/src/assets/gry/osiolek-ratuje-kotka-w-labiryncie
 OsiolekRatujeKotka/
   App/       OsiolekApp (wejście), StanGry (@Observable: ekrany, nakładki, ustawienia, pętla klatek CADisplayLink)
   Logika/    czysty Swift bez SwiftUI, przeniesiony 1:1 z gry (te same nazwy funkcji):
-             Labirynt (budowa planszy, BFS, krzaczek), Rozgrywka (ruch, kotek, wygrana, trudność), Losowanie
+             Labirynt (budowa planszy, BFS, krzaczek), Rozgrywka (ruch, kotek, wygrana, trudność),
+             Podpowiedz (podpowiedź stopniowana), Album (naklejki), Losowanie
   Rysunki/   Pioro (płótno z API jak w HTML na GraphicsContext, krzywe przez punkty), Postacie, Plansza
-  Widoki/    StartView, GraView (pasek, plansza, strzałki), Nakladki (menu, „Brawo”), Styl (kolory, przyciski „kreska”)
+  Widoki/    StartView, SzafaView (koszulki, paleta), GraView (pasek, plansza, strzałki), AlbumView (album, tacka),
+             Nakladki (menu, „Brawo”), KlawiaturaSprzetowa, Styl (kolory, przyciski „kreska”)
   Dzwiek/    Syntezator (dźwięki i muzyka z tonów, bez plików, jak Web Audio w grze)
   Teksty/    Jezyk (teksty z Teksty.json, odmiana „kroki”)
   Zasoby/    Teksty.json, Rysunki.json, Assets.xcassets

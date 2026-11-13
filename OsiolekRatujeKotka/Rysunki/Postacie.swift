@@ -232,3 +232,124 @@ func jednolity(_ kolor: Color) -> GraphicsContext.Filter {
     m.b1 = 0; m.b2 = 0; m.b3 = 0; m.b4 = 0; m.b5 = rgb.blue
     return .colorMatrix(m)
 }
+
+// MARK: - Naklejki i album (rysunki z osobnych kartek)
+
+func rysujSlonce2(_ c: Plotno, _ s: Double) {
+    let D = RYS["SLONCE2"]
+    piorko(c, s, 9); owal(c, D["kolo"].liczby, kolorK("slonce"))
+    for p in D["promienie"].tablica { linia(c, p.punkty) }
+}
+
+func rysujZwierzatko(_ c: Plotno, _ s: Double) {
+    let Z = RYS["ZWIERZATKO"]
+    piorko(c, s, 9)
+    for n in Z["nogi"].tablica { ksztalt(c, n.punkty, kolorK("zwierzatko")) }
+    for u in Z["uszy"].tablica { ksztalt(c, u.punkty, kolorK("zwierzatko")) }
+    ksztalt(c, Z["cialo"].punkty, kolorK("zwierzatko"))
+    for u in Z["wUszach"].tablica { linia(c, u.punkty) }
+    for o in Z["oczy"].tablica { owal(c, o.liczby, nil) }
+    linia(c, Z["usmiech"].punkty)
+}
+
+/// Robot: opiekun planu w trybie „Zaplanuj drogę”.
+func rysujRobota(_ c: Plotno, _ s: Double) {
+    let B = RYS["ROBOT"]
+    piorko(c, s, 9)
+    for n in B["nogi"].tablica { ksztalt(c, n.punkty, kolorK("robot")) }
+    for u in B["uszy"].tablica { ksztalt(c, u.punkty, kolorK("robot")) }
+    ksztalt(c, B["cialo"].punkty, kolorK("robot"))
+    for u in B["wUszach"].tablica { linia(c, u.punkty) }
+    for o in B["oczy"].tablica { owal(c, o.liczby, TUSZ) }
+    for b in B["blaski"].tablica {
+        let o = b.liczby
+        c.beginPath(); c.ellipse(o[0], o[1], o[2], o[3]); c.fillStyle = kolorK("robot"); c.fill()
+    }
+    linia(c, B["usmiech"].punkty)
+}
+
+func rysujDziewczynke(_ c: Plotno, _ s: Double) {
+    let D = RYS["DZIEWCZYNKA"]
+    piorko(c, s, 9)
+    ksztalt(c, D["wlosy"].punkty, kolorK("pien"))
+    for o in D["loki"].tablica { owal(c, o.liczby, kolorK("pien")) }
+    for l in D["nogi"].tablica { linia(c, l.punkty) }
+    ksztalt(c, D["sukienka"].punkty, kolorK("dach"))
+    for l in D["rece"].tablica { linia(c, l.punkty) }
+    owal(c, D["twarz"].liczby, kolorK("pyszczek"))
+    for o in D["oczy"].tablica { owal(c, o.liczby, TUSZ) }
+    linia(c, D["usmiech"].punkty)
+}
+
+func rysujJednorozca(_ c: Plotno, _ s: Double) {
+    let J = RYS["JEDNOROZEC"]
+    piorko(c, s, 9)
+    for n in J["nogi"].tablica { ksztalt(c, n.punkty, kolorK("jednorozec")) }
+    for o in J["kopytka"].tablica { owal(c, o.liczby, nil) }
+    linia(c, J["ogon"].punkty)
+    ksztalt(c, J["cialo"].punkty, kolorK("jednorozec"))
+    linia(c, J["szyja"].punkty)
+    ksztalt(c, J["ucho"].punkty, kolorK("jednorozec")); ksztalt(c, J["rog"].punkty, kolorK("slonce"))
+    ksztalt(c, J["glowa"].punkty, kolorK("jednorozec"))
+    owal(c, J["oko"].liczby, TUSZ); owal(c, J["nos"].liczby, TUSZ); linia(c, J["usmiech"].punkty)
+}
+
+/// Gwiazdki: kreski długopisem na żółtym śladzie (jak flamaster pod spodem).
+func rysujGwiazdki(_ c: Plotno, _ s: Double) {
+    let L = RYS["GWIAZDKI"]["linie"].tablica
+    piorko(c, s, 70); c.strokeStyle = kolorK("slonce")
+    for l in L { linia(c, l.punkty) }
+    piorko(c, s, 12)
+    for l in L { linia(c, l.punkty) }
+}
+
+let ALBUM_RAMKA = RYS["ALBUM"]["ramka"].liczby
+
+func rysujAlbum(_ c: Plotno, _ s: Double, _ kolor: Color) {
+    let A = RYS["ALBUM"]
+    piorko(c, s, 9)
+    c.fillStyle = kolor; sciezka(c, A["okladka"].punkty, true); c.fill()
+    for l in A["kreski"].tablica { linia(c, l.punkty) }
+}
+
+/// Rysunek naklejki: ramka i funkcja rysująca (`NAKLEJKI` z gry, ta sama kolejność).
+struct RysunekNaklejki {
+    let ramka: [Double]
+    let rysuj: (Plotno, Double) -> Void
+}
+
+func rysunekNaklejki(_ id: String) -> RysunekNaklejki {
+    switch id {
+    case "osiolek": return RysunekNaklejki(ramka: OSIOLEK_RAMKA) { c, s in osiolekKodem(c, s, nil) }
+    case "kotek": return RysunekNaklejki(ramka: KOTEK_RAMKA, rysuj: kotekKodem)
+    case "dom": return RysunekNaklejki(ramka: DOMEK_RAMKA) { c, s in rysujScene(c, s, bezNieba: true) }
+    case "robot": return RysunekNaklejki(ramka: RYS["ROBOT"]["ramka"].liczby, rysuj: rysujRobota)
+    case "lapka": return RysunekNaklejki(ramka: LAPKA_RAMKA) { c, s in rysujLapke(c, s, kolorK("lapka")) }
+    case "krzak": return RysunekNaklejki(ramka: KRZAK_RAMKA, rysuj: rysujKrzak)
+    case "slonce": return RysunekNaklejki(ramka: RYS["SLONCE2"]["ramka"].liczby, rysuj: rysujSlonce2)
+    case "zwierzatko": return RysunekNaklejki(ramka: RYS["ZWIERZATKO"]["ramka"].liczby, rysuj: rysujZwierzatko)
+    case "dziewczynka": return RysunekNaklejki(ramka: RYS["DZIEWCZYNKA"]["ramka"].liczby, rysuj: rysujDziewczynke)
+    case "jednorozec": return RysunekNaklejki(ramka: RYS["JEDNOROZEC"]["ramka"].liczby, rysuj: rysujJednorozca)
+    case "gwiazdki": return RysunekNaklejki(ramka: RYS["GWIAZDKI"]["ramka"].liczby, rysuj: rysujGwiazdki)
+    case "serce": return RysunekNaklejki(ramka: SERCE_RAMKA, rysuj: rysujSerce)
+    case "trawa": return RysunekNaklejki(ramka: RYS["TRAWA"]["ramka"].liczby) { c, s in rysujWarstwy(c, s, RYS["TRAWA"]) }
+    case "samochod": return RysunekNaklejki(ramka: RYS["SAMOCHOD"]["ramka"].liczby) { c, s in rysujWarstwy(c, s, RYS["SAMOCHOD"]) }
+    case "kon": return RysunekNaklejki(ramka: RYS["KON"]["ramka"].liczby) { c, s in rysujWarstwy(c, s, RYS["KON"]) }
+    case "grzybek": return RysunekNaklejki(ramka: RYS["GRZYBEK"]["ramka"].liczby) { c, s in rysujWarstwy(c, s, RYS["GRZYBEK"]) }
+    default: return RysunekNaklejki(ramka: RYS["PILKA"]["ramka"].liczby) { c, s in rysujWarstwy(c, s, RYS["PILKA"]) }
+    }
+}
+
+/// 10 kolorów do kolorowania koszulki (nazwa, kolor), jak `KOLORY` w grze.
+let KOLORY_KOSZULKI: [(nazwa: String, hex: String)] = RYS["KOLORY"].tablica.map { ($0[0].napis, $0[1].napis) }
+
+/// Kolory kolejnych albumów: kremowy, potem jaśniejsze kolory z palety (bez białego) — `KOLORY_ALBUMU`.
+let KOLORY_ALBUMU: [Color] = {
+    func jasniej(_ hex: String) -> Color {
+        var v: UInt64 = 0
+        Scanner(string: String(hex.dropFirst())).scanHexInt64(&v)
+        let kanaly = [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff].map { (255 - (255 - Double($0)) * 0.45).rounded() / 255 }
+        return Color(.sRGB, red: kanaly[0], green: kanaly[1], blue: kanaly[2], opacity: 1)
+    }
+    return [Color(hex: "#fff6e0")] + KOLORY_KOSZULKI.filter { $0.nazwa != "bialy" }.map { jasniej($0.hex) }
+}()

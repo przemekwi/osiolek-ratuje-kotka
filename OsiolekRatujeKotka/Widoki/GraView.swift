@@ -58,29 +58,45 @@ struct PasekGry: View {
     // Jak w grze w trybie dla dziecka: poziom i przedmioty w pierwszym wierszu, zadanie pod spodem
     // w kolorze wyróżnienia; bez zegara (tryb dla dziecka ukrywa czas).
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 16) {
-                    Text(stan.t("poziom", ["n": stan.poziom])).font(.kreda(21))
-                    if stan.gra.sercaN > 0 { Zbierane() }
-                }
-                .foregroundStyle(Kolory.tekst)
-                Text(stan.napisZadania)
-                    .font(.kreda(19))
-                    .foregroundStyle(Kolory.zaznaczenie)
-                    .lineLimit(1).minimumScaleFactor(0.7)
+        // Szeroki ekran: napisy i przyciski w jednym wierszu; wąski (telefon pionowo): przyciski pod napisami, jak w grze.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 14) {
+                napisy
+                Spacer(minLength: 4)
+                przyciski
             }
-            Spacer(minLength: 4)
-            PrzyciskPodpowiedzi()
-            Button { stan.pauza() } label: {
-                HStack(spacing: 6) {
-                    IkonaDziecka(id: "menu").frame(width: 26, height: 26)
-                    Text(stan.t("menu"))
-                }
+            VStack(alignment: .leading, spacing: 6) {
+                napisy
+                HStack(spacing: 8) { przyciski }.frame(maxWidth: .infinity)
             }
-            .buttonStyle(.kreska(Kolory.zolty, maly: true))
         }
         .frame(maxWidth: 1200)
+    }
+
+    private var napisy: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 16) {
+                Text(stan.t("poziom", ["n": stan.poziom])).font(.kreda(21))
+                if stan.gra.sercaN > 0 { Zbierane() }
+            }
+            .foregroundStyle(Kolory.tekst)
+            Text(stan.napisZadania)
+                .font(.kreda(19))
+                .foregroundStyle(Kolory.zaznaczenie)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+    }
+
+    @ViewBuilder private var przyciski: some View {
+        PrzyciskPodpowiedzi()
+        Button { stan.pokazAlbum() } label: {
+            HStack(spacing: 4) { IkonaDziecka(id: "album").frame(width: 24, height: 24); Text(stan.napisAlbumu).monospacedDigit().napisPaska() }
+        }
+        .buttonStyle(.kreska(Kolory.rozowy, maly: true))
+        Button { stan.pauza() } label: {
+            HStack(spacing: 4) { IkonaDziecka(id: "menu").frame(width: 24, height: 24); Text(stan.t("menu")).napisPaska() }
+        }
+        .buttonStyle(.kreska(Kolory.zolty, maly: true))
     }
 }
 
@@ -272,9 +288,15 @@ struct PrzyciskPodpowiedzi: View {
                     .phaseAnimator([0.0, 0.5, 0.0], trigger: stan.podpGotowa) { v, b in v.brightness(ograniczRuch ? 0 : b) }
                 Text(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : stan.t("podpowiedz"))
                     .monospacedDigit()
+                    .napisPaska()
             }
         }
         .buttonStyle(PrzyciskKreska(kolor: Kolory.zielony, maly: true, wypelnienie: laduje ? AnyShapeStyle(pasek) : nil))
         .accessibilityHint(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : "")
     }
+}
+
+extension Text {
+    /// Napis przycisku na pasku: jak w grze mniejszy na telefonie, a gdy brakuje miejsca — lekko ściśnięty.
+    func napisPaska() -> some View { font(.kreda(15)).lineLimit(1).minimumScaleFactor(0.6) }
 }

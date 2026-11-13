@@ -3,7 +3,7 @@ import UIKit
 import Observation
 
 enum Ekran { case start, szafa, gra }
-enum Nakladka: Equatable { case menu, brawo }
+enum Nakladka: Equatable { case menu, brawo, album }
 enum WyborMotywu: String, CaseIterable { case system, jasny, ciemny }
 
 /// Stan aplikacji widoczny dla SwiftUI. Logika poziomu żyje w `Rozgrywka`; tu są ekrany, nakładki,
@@ -14,7 +14,12 @@ final class StanGry {
     var nakladka: Nakladka?
     var jezyk: String = Teksty.jezykUrzadzenia()
     var motyw: WyborMotywu = .system
-    var koszulka: Koszulka?
+    /// Wybrana koszulka (indeks rysunku) i kolor z palety; nil — kolor z rysunku.
+    var koszulkaIndeks: Int?
+    var kolorKoszulki: String?
+    /// Koszulka, którą osiołek ma na sobie (`zalozona` z gry).
+    var koszulka: Koszulka? { koszulkaIndeks.map { Koszulka(indeks: $0, kolor: kolorKoszulki) } }
+    var album = AlbumNaklejek()
 
     // Napisy paska, odświeżane przy zmianie.
     private(set) var poziom = 1
@@ -67,9 +72,31 @@ final class StanGry {
         komunikat = t("start", ["n": poziom])
     }
 
+    /// „Graj”: najpierw szafa, jak w grze.
+    func graj() {
+        klik()
+        dzwiek.wlaczMuzyke()
+        ekran = .szafa
+    }
+
+    /// „Przebierz osiołka” w menu: szafa, a potem powrót do tego samego labiryntu.
+    func przebierz() {
+        klik()
+        nakladka = nil
+        gra.puscWszystko()
+        ekran = .szafa
+    }
+
+    func losujKoszulke() {
+        klik()
+        let inne = Koszulka.wszystkie.indices.filter { $0 != koszulkaIndeks }
+        koszulkaIndeks = inne.randomElement()
+    }
+
     func wDroge() {
         klik()
         dzwiek.wlaczMuzyke()
+        gra.pauza = false
         ekran = .gra
         if gra.lab.G.isEmpty || gra.faza == .koniec {
             if ramka.width > 0 && ramka.height > 0 { zacznijPoziom() } else { czekaNaRamke = true }
@@ -98,6 +125,19 @@ final class StanGry {
     }
 
     func wznow() { klik(); nakladka = nil; gra.pauza = false }
+
+    func pokazAlbum() {
+        klik()
+        if gra.faza != .koniec { gra.pauza = true; gra.puscWszystko() }
+        nakladka = .album
+    }
+
+    func zamknijAlbum() {
+        klik()
+        if gra.faza == .koniec { nakladka = .brawo } else { nakladka = nil; gra.pauza = false }
+    }
+
+    var napisAlbumu: String { t("album", ["n": album.naklejki.count, "m": AlbumNaklejek.wszystkie.count]) }
 
     /// „Podpowiedź”: łapki pokazują kawałek drogi albo komunikat, za ile sekund będzie gotowa.
     func pokazPodpowiedz() {
@@ -181,6 +221,7 @@ final class StanGry {
             komunikat = t("kotekJest")
         case .wygrana:
             dzwiek.brawo()
+            album.dajNaklejke(&gra.lab.los)
             faza = gra.faza; spotkania += 1
             brawoZa = gra.ograniczonyRuch ? 0.2 : gra.lab.trybGry == .plan ? 1.4 : 0.9
         }

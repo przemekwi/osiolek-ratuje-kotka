@@ -11,7 +11,8 @@ struct OsiolekApp: App {
         WindowGroup {
             Group {
                 switch stan.ekran {
-                case .start, .szafa: StartView()
+                case .start: StartView()
+                case .szafa: SzafaView()
                 case .gra: GraView()
                 }
             }

@@ -13,6 +13,7 @@ struct NakladkiGry: View {
                         switch n {
                         case .menu: MenuPauzy()
                         case .brawo: Brawo()
+                        case .album: OknoAlbumu()
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 0)
@@ -34,6 +35,10 @@ struct MenuPauzy: View {
             VStack(spacing: 12) {
                 Button(stan.t("grajDalej")) { stan.wznow() }.buttonStyle(.kreska)
                 Button(stan.t("nowaGra")) { stan.nowaGra() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
+                Button { stan.przebierz() } label: {
+                    HStack(spacing: 6) { IkonaKoszulki().frame(width: 26, height: 26); Text(stan.t("przebierz")) }
+                }
+                .buttonStyle(.kreska(Kolory.rozowy, maly: true))
                 PrzelacznikiDzwieku()
                 PrzelacznikMotywu()
                 WyborJezyka()
@@ -57,6 +62,7 @@ struct Brawo: View {
                 .accessibilityHidden(stan.wynikDrogi == nil)
             Text(stan.wynikPodp).font(.kreda(18, gruby: false)).multilineTextAlignment(.center)
             if let d = stan.wynikDrogi { Text(d).font(.kreda(18, gruby: false)).multilineTextAlignment(.center) }
+            NowaNaklejka()
             Rzad {
                 Button(stan.t("nastepny")) { stan.nastepnyPoziom() }.buttonStyle(.kreska)
                 Button { stan.nakladka = .menu; stan.gra.pauza = true } label: {
@@ -169,5 +175,15 @@ struct Rzad<Tresc: View>: View {
             HStack(spacing: 12) { tresc }
             VStack(spacing: 12) { tresc }
         }
+    }
+}
+
+/// Koszulka osiołka jako ikona przycisku „Przebierz osiołka” (bez koszulki — pierwsza z szafy).
+struct IkonaKoszulki: View {
+    @Environment(StanGry.self) private var stan
+    var body: some View {
+        let k = stan.koszulka ?? Koszulka.wszystkie[0]
+        Canvas { g, size in wpisz(Plotno(g), k.ramka, 1, 1, size.width - 2, size.height - 2) { c2, s in rysujKoszulke(c2, s, k, 1.2) } }
+            .accessibilityHidden(true)
     }
 }
