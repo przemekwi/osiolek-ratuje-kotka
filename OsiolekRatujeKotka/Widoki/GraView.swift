@@ -5,7 +5,6 @@ struct GraView: View {
     @Environment(StanGry.self) private var stan
     @Environment(\.colorScheme) private var schemat
     @Environment(\.accessibilityReduceMotion) private var ograniczRuch
-    @FocusState private var fokus: Bool
 
     var body: some View {
         GeometryReader { geo in
@@ -26,38 +25,29 @@ struct GraView: View {
         .padding(8)
         .background(Kolory.tlo.ignoresSafeArea())
         .overlay { NakladkiGry() }
-        .focusable()
-        .focusEffectDisabled()
-        .focused($fokus)
-        .onKeyPress(phases: [.down, .up]) { obsluzKlawisz($0) }
+        .background(KlawiaturaSprzetowa { klawisz, wcisniety in obsluzKlawisz(klawisz, wcisniety) })
         .sensoryFeedback(.impact(weight: .light), trigger: stan.uderzenia)
         .sensoryFeedback(.success, trigger: stan.spotkania)
-        .onAppear { fokus = true; stan.gra.ograniczonyRuch = ograniczRuch }
+        .onAppear { stan.gra.ograniczonyRuch = ograniczRuch }
         .onChange(of: ograniczRuch) { _, n in stan.gra.ograniczonyRuch = n }
         .accessibilityElement(children: .contain)
     }
 
-    /// Klawiatura sprzętowa (iPad): strzałki i W A S D prowadzą osiołka, P albo Esc — pauza.
-    private func obsluzKlawisz(_ e: KeyPress) -> KeyPress.Result {
+    /// Klawiatura sprzętowa (iPad, Mac z symulatorem): strzałki i W A S D prowadzą osiołka, P albo Esc — pauza.
+    private func obsluzKlawisz(_ klawisz: Klawisz, _ wcisniety: Bool) {
         let gra = stan.gra
-        if e.phase == .down && (e.key == .escape || e.characters.lowercased() == "p") {
+        switch klawisz {
+        case .pauza:
+            guard wcisniety else { return }
             if stan.nakladka == .menu { stan.wznow() } else if gra.wGrze && stan.nakladka == nil { stan.pauza() }
-            return .handled
+        case .kierunek(let k):
+            let zrodlo = "klawisz:\(k)"
+            if wcisniety {
+                if gra.wGrze && stan.nakladka == nil { gra.trzymaj(zrodlo, k.rawValue) }
+            } else {
+                gra.pusc(zrodlo)
+            }
         }
-        let znak = e.characters.lowercased()
-        let k: Kierunek
-        if e.key == .rightArrow || znak == "d" { k = .prawo }
-        else if e.key == .leftArrow || znak == "a" { k = .lewo }
-        else if e.key == .downArrow || znak == "s" { k = .dol }
-        else if e.key == .upArrow || znak == "w" { k = .gora }
-        else { return .ignored }
-        let zrodlo = "klawisz:\(k)"
-        if e.phase == .down {
-            if gra.wGrze && stan.nakladka == nil { gra.trzymaj(zrodlo, k.rawValue) }
-        } else {
-            gra.pusc(zrodlo)
-        }
-        return .handled
     }
 }
 
