@@ -23,6 +23,7 @@ struct OsiolekApp: App {
             .onChange(of: faza) { _, f in
                 // Po zejściu do tła gra staje (nic nie dzieje się za plecami dziecka).
                 if f != .active && stan.ekran == .gra && stan.nakladka == nil { stan.pauza() }
+                if f == .active { Syntezator.wspolny.wznow() } else if f == .background { Syntezator.wspolny.wstrzymaj() }
             }
         }
     }

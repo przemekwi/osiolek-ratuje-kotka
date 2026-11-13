@@ -11,7 +11,7 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 | Etap | Zakres | Stan |
 |---|---|---|
 | 1 | Struktura projektu, generator labiryntu, ruch, kotek, domek, plansza z rysunkami, strzałki, palec, klawiatura, „Brawo” | gotowy, działa w symulatorze (iPhone 17, iOS 26.5) |
-| 2 | Krzaczek i serduszko (logika jest), przedmioty, podpowiedź stopniowana, porównanie drogi | w części |
+| 2 | Krzaczek i serduszko, przedmioty, podpowiedź stopniowana z odliczaniem, porównanie drogi, dźwięki i muzyka | gotowy do sprawdzenia; brakuje wyjaśnienia krzaczka |
 | 3 | Tryb „Zaplanuj drogę z robotem” | do zrobienia |
 | 4 | Ekran startowy 1:1, szafa z koszulkami, menu, „O grze”, dźwięk i muzyka | do zrobienia |
 | 5 | Album naklejek, koniec rozdziału co 5 poziomów | do zrobienia |
@@ -58,6 +58,7 @@ OsiolekRatujeKotka/
              Labirynt (budowa planszy, BFS, krzaczek), Rozgrywka (ruch, kotek, wygrana, trudność), Losowanie
   Rysunki/   Pioro (płótno z API jak w HTML na GraphicsContext, krzywe przez punkty), Postacie, Plansza
   Widoki/    StartView, GraView (pasek, plansza, strzałki), Nakladki (menu, „Brawo”), Styl (kolory, przyciski „kreska”)
+  Dzwiek/    Syntezator (dźwięki i muzyka z tonów, bez plików, jak Web Audio w grze)
   Teksty/    Jezyk (teksty z Teksty.json, odmiana „kroki”)
   Zasoby/    Teksty.json, Rysunki.json, Assets.xcassets
 Package.swift   logika jako biblioteka do testów (także na Linuksie)
@@ -77,7 +78,7 @@ narzedzia/      eksport danych i ikony z gry webowej
 ## Biblioteki i licencje
 
 Aplikacja nie używa żadnych zewnętrznych bibliotek. Korzysta tylko z frameworków systemowych Apple:
-SwiftUI, UIKit (pętla klatek `CADisplayLink`, kolory zależne od motywu), Observation i Foundation.
+SwiftUI, UIKit (pętla klatek `CADisplayLink`, klawiatura sprzętowa, kolory zależne od motywu), AVFoundation (syntezator dźwięku), Observation i Foundation.
 Font Chalkboard SE jest fontem systemowym iOS. Testy używają XCTest.
 
 Narzędzia pomocnicze (nie trafiają do aplikacji): Node.js i Playwright (Apache-2.0) do eksportu danych i ikony.

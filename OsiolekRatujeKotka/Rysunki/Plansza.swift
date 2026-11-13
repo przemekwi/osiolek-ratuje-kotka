@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Kolory planszy dla motywu (PALETA z gry).
 struct Paleta {
@@ -129,11 +130,44 @@ func rysujTlo(_ c: Plotno, _ lab: Labirynt, _ S: Geometria, _ P_: Paleta) {
     }
 }
 
+/// Gotowe postacie z obwódką trzymane jako obrazki (`duszki` z gry): obwódka to 12 kopii sylwetki, więc rysowanie
+/// jej w każdej klatce zabierało czas i animacja gubiła klatki. Obrazek powstaje od nowa tylko przy zmianie
+/// rozmiaru, motywu albo koszulki.
+final class Duszki {
+    static let wspolne = Duszki()
+    private var pamiec: [String: CGImage] = [:]
+
+    func obraz(_ klucz: String, w: Double, h: Double, m: Double, rysuj: @escaping (Plotno) -> Void) -> CGImage? {
+        if let o = pamiec[klucz] { return o }
+        var wynik: CGImage?
+        let skala = max(1, min(3, UITraitCollection.current.displayScale))
+        // ImageRenderer działa w wątku głównym, a Canvas rysuje się właśnie w nim.
+        MainActor.assumeIsolated {
+            let widok = Canvas { g, _ in rysuj(Plotno(g)) }.frame(width: w + 2 * m, height: h + 2 * m)
+            let r = ImageRenderer(content: widok)
+            r.scale = skala
+            wynik = r.cgImage
+        }
+        if pamiec.count > 48 { pamiec.removeAll() }
+        if let wynik { pamiec[klucz] = wynik }
+        return wynik
+    }
+}
+
 /// Postać jak naklejka w prostokącie (x, y, w, h); obwódka zależy od postaci i motywu (`postac` z gry).
-func postac(_ c: Plotno, osiolek: Bool = false, _ x: Double, _ y: Double, _ w: Double, _ h: Double, ciemny: Bool,
+/// `id` rozróżnia postacie w pamięci duszków (np. osiołek w innej koszulce to inny obrazek).
+func postac(_ c: Plotno, _ id: String, osiolek: Bool = false, _ x: Double, _ y: Double, _ w: Double, _ h: Double, ciemny: Bool,
             _ rysuj: @escaping (Plotno, Double, Double, Double, Double) -> Void) {
     let kolor: Color? = osiolek ? Obwodka.osiolek : ciemny ? Obwodka.ciemny : nil
-    zObwodka(c, x, y, w, h, kolor: kolor) { cc in rysuj(cc, x, y, w, h) }
+    let m = (min(w, h) * 0.12).rounded(.up) + 2
+    let klucz = "\(id)|\(Int(w * 10))|\(Int(h * 10))|\(osiolek ? "o" : ciemny ? "c" : "j")"
+    if let obraz = Duszki.wspolne.obraz(klucz, w: w, h: h, m: m, rysuj: { cc in
+        zObwodka(cc, m, m, w, h, kolor: kolor) { c2 in rysuj(c2, m, m, w, h) }
+    }) {
+        c.drawImage(Image(decorative: obraz, scale: max(1, min(3, UITraitCollection.current.displayScale))), x - m, y - m, w + 2 * m, h + 2 * m)
+    } else {
+        zObwodka(c, x, y, w, h, kolor: kolor) { cc in rysuj(cc, x, y, w, h) }
+    }
 }
 
 /// Ruchoma część planszy, rysowana co klatkę (`rysujPlansze` z gry).
@@ -148,12 +182,12 @@ func rysujPlansze(_ c: Plotno, _ gra: Rozgrywka, _ S: Geometria, _ P_: Paleta, t
         if !pr.otwarta {
             let f = ruch ? 0.92 + 0.08 * sin(t * 4) : 1
             c.save(); c.translate(sx(Double(lab.ix(pr.klucz))), sy(Double(lab.iy(pr.klucz)))); c.scale(f, f)
-            postac(c, -C * 0.36, -C * 0.36, C * 0.72, C * 0.72, ciemny: ciemny) { c2, x, y, w, h in wpisz(c2, SERCE_RAMKA, x, y, w, h, rysujSerce) }
+            postac(c, "klucz", -C * 0.36, -C * 0.36, C * 0.72, C * 0.72, ciemny: ciemny) { c2, x, y, w, h in wpisz(c2, SERCE_RAMKA, x, y, w, h, rysujSerce) }
             c.restore()
         }
         if !pr.otwarta || pr.znika > 0 {
             c.save(); c.globalAlpha = pr.otwarta ? pr.znika : 1
-            postac(c, sx(Double(lab.ix(pr.pole))) - C * 0.42, sy(Double(lab.iy(pr.pole))) - C * 0.5, C * 0.84, C, ciemny: ciemny) { c2, x, y, w, h in
+            postac(c, "krzak", sx(Double(lab.ix(pr.pole))) - C * 0.42, sy(Double(lab.iy(pr.pole))) - C * 0.5, C * 0.84, C, ciemny: ciemny) { c2, x, y, w, h in
                 wpisz(c2, KRZAK_RAMKA, x, y, w, h, rysujKrzak)
             }
             c.restore()
@@ -161,7 +195,7 @@ func rysujPlansze(_ c: Plotno, _ gra: Rozgrywka, _ S: Geometria, _ P_: Paleta, t
     }
     let p = gra.przedmiot
     for i in gra.serca {
-        postac(c, sx(Double(lab.ix(i))) - C * 0.3, sy(Double(lab.iy(i))) - C * 0.3, C * 0.6, C * 0.6, ciemny: ciemny) { c2, x, y, w, h in
+        postac(c, "przedmiot-\(p.rawValue)", sx(Double(lab.ix(i))) - C * 0.3, sy(Double(lab.iy(i))) - C * 0.3, C * 0.6, C * 0.6, ciemny: ciemny) { c2, x, y, w, h in
             wpisz(c2, ramkaPrzedmiotu(p), x, y, w, h) { c3, s in rysujPrzedmiot(c3, s, p, kolor: true) }
         }
     }
@@ -169,12 +203,20 @@ func rysujPlansze(_ c: Plotno, _ gra: Rozgrywka, _ S: Geometria, _ P_: Paleta, t
     let r = gra.radosc, kx = sx(gra.kot.x) - C * 0.55, ky = sy(gra.kot.y) - C * 0.42
     let R_ = gra.radoscPelna > 0 ? gra.radoscPelna : Rozgrywka.RADOSC_S
     let skok = r > 0 && ruch ? min(ky, abs(sin((R_ - r) / Rozgrywka.RADOSC_S * .pi * 3)) * C * 0.24 * (0.4 + 0.6 * r / R_)) : 0
-    if r <= 0 { postac(c, kx, ky, C * 1.1, C * 0.82, ciemny: ciemny) { c2, x, y, w, h in rysujKotka(c2, x, y, w, h) } }
+    if let droga = gra.droga, gra.drogaZostalo > 0 {
+        for (n, l) in droga.enumerated() {
+            let f = ruch ? 0.85 + 0.15 * sin(t * 6 - Double(n) * 0.7) : 1
+            lapka(c, sx(Double(lab.ix(l.i))), sy(Double(lab.iy(l.i))), C * 0.2 * f, l.kat, P_.lapka)
+        }
+    }
+    if r <= 0 { postac(c, "kotek", kx, ky, C * 1.1, C * 0.82, ciemny: ciemny) { c2, x, y, w, h in rysujKotka(c2, x, y, w, h) } }
     let drgnij = gra.bum > 0 ? sin(gra.bum * 60) * C * 0.05 : 0
     let podskok = gra.osiol.cel >= 0 && ruch ? abs(sin(t * 14)) * C * 0.06 : 0
     // Na małych polach (duża plansza) osiołek jest trochę większy niż pole, żeby nie zginął w labiryncie.
     let f = min(1.35, max(1, 26 / C))
-    postac(c, osiolek: true, sx(gra.osiol.x) - C * 0.5 * f + drgnij, sy(gra.osiol.y) - C * (0.5 + 0.05 * f) * f + C * 0.5 * (f - 1) - podskok,
+    var idOsiolka = "osiolek"
+    if let k = koszulka { idOsiolka += "-\(k.indeks)-" + (k.kolor ?? "") }
+    postac(c, idOsiolka, osiolek: true, sx(gra.osiol.x) - C * 0.5 * f + drgnij, sy(gra.osiol.y) - C * (0.5 + 0.05 * f) * f + C * 0.5 * (f - 1) - podskok,
            C * f, C * 1.05 * f, ciemny: ciemny) { c2, x, y, w, h in rysujOsiolka(c2, x, y, w, h, koszulka) }
-    if r > 0 { postac(c, kx, ky - skok, C * 1.1, C * 0.82, ciemny: ciemny) { c2, x, y, w, h in rysujKotka(c2, x, y, w, h) } }
+    if r > 0 { postac(c, "kotek", kx, ky - skok, C * 1.1, C * 0.82, ciemny: ciemny) { c2, x, y, w, h in rysujKotka(c2, x, y, w, h) } }
 }

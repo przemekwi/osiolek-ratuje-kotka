@@ -55,8 +55,12 @@ final class Rozgrywka {
     var zebrane = 0
     var przedmiot: Przedmiot = .serce
     var porownanie: Porownanie?
-    /// Najwyższy stopień podpowiedzi użyty na poziomie (uzupełnia moduł podpowiedzi).
-    var podpMaks = 0
+    /// Podpowiedź stopniowana (Podpowiedz.swift) i łapki aktualnie pokazanej drogi.
+    var podp = StanPodp()
+    var droga: [LapkaPodp]?
+    var drogaZostalo = 0.0
+    /// Najwyższy stopień podpowiedzi użyty na poziomie.
+    var podpMaks: Int { podp.maks }
     var ograniczonyRuch = false
 
     /// Trzymane strzałki: klawisz, przycisk albo palec. Liczy się ostatnio wciśnięta.
@@ -88,11 +92,12 @@ final class Rozgrywka {
         osiol = Ruchomy(pole: d, x: Double(ix(d)), y: Double(iy(d)), cel: -1)
         kot = Ruchomy(pole: k, x: Double(ix(k)), y: Double(iy(k)), cel: -1)
         oparty = nil; kroki = 0; czas = 0; start = false; podpowiedzi = 0; bum = 0
-        slady = []; pauza = false; radosc = 0; trasa = [d]; trasaKot = 0; porownanie = nil; podpMaks = 0
+        slady = []; pauza = false; radosc = 0; trasa = [d]; trasaKot = 0; porownanie = nil; droga = nil; drogaZostalo = 0
         serca = losujSerca(); sercaN = serca.count; zebrane = 0
         let krzak = lab.przeszkoda.pole >= 0
         przedmiot = lab.los.pick(Przedmiot.allCases.filter { $0 != przedmiot && !($0 == .serce && krzak) })
         geo = nil
+        podpStart()
     }
 
     func losujSerca() -> [Int] {
@@ -202,7 +207,7 @@ final class Rozgrywka {
         }
         if faza == .szukaj && p == lab.kotekI && lab.trybGry == .plan { radoscKotka(); wygrana(); return }
         if faza == .szukaj && p == lab.kotekI {
-            trasaKot = trasa.count; faza = .prowadz; kot.pole = lab.kotekI; radoscKotka()
+            trasaKot = trasa.count; faza = .prowadz; kot.pole = lab.kotekI; radoscKotka(); droga = nil
             naZdarzenie?(.kotekZnaleziony)
         } else if faza == .prowadz && p == lab.domI {
             wygrana(); return
@@ -223,6 +228,8 @@ final class Rozgrywka {
         if bum > 0 { bum = max(0, bum - dt) }
         if radosc > 0 { radosc = max(0, radosc - dt) }
         if lab.przeszkoda.znika > 0 { lab.przeszkoda.znika = ograniczonyRuch ? 0 : max(0, lab.przeszkoda.znika - dt * 1.6) }
+        liczPodp(dt)
+        if drogaZostalo > 0 { drogaZostalo -= dt; if drogaZostalo <= 0 { droga = nil } }
         if start && (faza == .szukaj || faza == .prowadz) { czas += dt }
     }
 
@@ -252,6 +259,7 @@ final class Rozgrywka {
         lab.trudnosc = nastepnaTrudnosc(planyIle: planyIle)
         faza = .koniec
         trzymane.removeAll()
+        droga = nil
         if kot.cel < 0 { kot.cel = osiol.pole == kot.pole ? -1 : kot.pole }
         porownanie = nil
         if lab.trybGry == .zwykly && etapPoziomu >= 2 && trasaKot > 1 {

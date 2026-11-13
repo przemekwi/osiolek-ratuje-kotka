@@ -71,6 +71,7 @@ struct PasekGry: View {
                     .lineLimit(1).minimumScaleFactor(0.7)
             }
             Spacer(minLength: 4)
+            PrzyciskPodpowiedzi()
             Button { stan.pauza() } label: {
                 HStack(spacing: 6) {
                     IkonaDziecka(id: "menu").frame(width: 26, height: 26)
@@ -245,5 +246,35 @@ struct PrzyciskStrzalki: View {
             stan.gra.trzymaj("przycisk:\(kierunek)", kierunek.rawValue)
             stan.gra.pusc("przycisk:\(kierunek)")
         }
+    }
+}
+
+/// „Podpowiedź”: przez odliczanie przycisk wypełnia się jak pasek, a żarówka jest blada; gdy podpowiedź jest gotowa,
+/// żarówka raz się rozjaśnia (jak `#podpowiedz.laduje` i `.blysk` w grze).
+struct PrzyciskPodpowiedzi: View {
+    @Environment(StanGry.self) private var stan
+    @Environment(\.colorScheme) private var schemat
+    @Environment(\.accessibilityReduceMotion) private var ograniczRuch
+
+    var body: some View {
+        let laduje = stan.podpZa > 0
+        let p = stan.podpPasek
+        // W motywie ciemnym niewypełniona część jest jasna, żeby napis był czytelny.
+        let reszta = schemat == .dark ? Kolory.ciche : Kolory.karta
+        let pasek = LinearGradient(stops: [.init(color: Kolory.zielony, location: 0), .init(color: Kolory.zielony, location: p),
+                                           .init(color: reszta, location: p), .init(color: reszta, location: 1)],
+                                   startPoint: .leading, endPoint: .trailing)
+        Button { stan.pokazPodpowiedz() } label: {
+            HStack(spacing: 6) {
+                IkonaDziecka(id: "podpowiedz")
+                    .frame(width: 26, height: 26)
+                    .opacity(laduje ? 0.35 : 1)
+                    .phaseAnimator([0.0, 0.5, 0.0], trigger: stan.podpGotowa) { v, b in v.brightness(ograniczRuch ? 0 : b) }
+                Text(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : stan.t("podpowiedz"))
+                    .monospacedDigit()
+            }
+        }
+        .buttonStyle(PrzyciskKreska(kolor: Kolory.zielony, maly: true, wypelnienie: laduje ? AnyShapeStyle(pasek) : nil))
+        .accessibilityHint(laduje ? stan.t("podpZa", ["s": stan.podpZa]) : "")
     }
 }

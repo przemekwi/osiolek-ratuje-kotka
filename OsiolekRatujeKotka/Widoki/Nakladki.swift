@@ -34,6 +34,7 @@ struct MenuPauzy: View {
             VStack(spacing: 12) {
                 Button(stan.t("grajDalej")) { stan.wznow() }.buttonStyle(.kreska)
                 Button(stan.t("nowaGra")) { stan.nowaGra() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
+                PrzelacznikiDzwieku()
                 PrzelacznikMotywu()
                 WyborJezyka()
                 Button(stan.t("wyjdz")) { stan.doStartu() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
@@ -105,12 +106,28 @@ struct ObrazBrawo: View {
     }
 }
 
+/// „Muzyka: włączona/wyłączona” i „Dźwięki: włączone/wyłączone”.
+struct PrzelacznikiDzwieku: View {
+    @Environment(StanGry.self) private var stan
+    var body: some View {
+        Rzad {
+            Button(stan.t(stan.muzyka ? "muzykaWl" : "muzykaWyl")) { stan.muzyka.toggle(); stan.klik() }
+                .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+                .accessibilityAddTraits(stan.muzyka ? .isSelected : [])
+            Button(stan.t(stan.dzwieki ? "dzwiekiWl" : "dzwiekiWyl")) { stan.dzwieki.toggle(); stan.klik() }
+                .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+                .accessibilityAddTraits(stan.dzwieki ? .isSelected : [])
+        }
+    }
+}
+
 /// „Kolory: jak w urządzeniu / jasne / ciemne” — przełącza po kolei, jak w grze.
 struct PrzelacznikMotywu: View {
     @Environment(StanGry.self) private var stan
     var body: some View {
         let napis = ["system": "motywSystem", "jasny": "motywJasny", "ciemny": "motywCiemny"][stan.motyw.rawValue] ?? "motywSystem"
         Button(stan.t(napis)) {
+            stan.klik()
             let w = WyborMotywu.allCases
             stan.motyw = w[(w.firstIndex(of: stan.motyw)! + 1) % w.count]
         }

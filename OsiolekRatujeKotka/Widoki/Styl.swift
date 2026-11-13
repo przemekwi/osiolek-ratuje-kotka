@@ -58,7 +58,7 @@ struct KsztaltKreski: Shape {
 
 extension View {
     /// Tło z obramowaniem „kreska” (3 pt, kolor tuszu).
-    func kreska(_ tlo: Color) -> some View {
+    func kreska<S: ShapeStyle>(_ tlo: S) -> some View {
         background(KsztaltKreski().fill(tlo))
             .overlay(KsztaltKreski().stroke(Kolory.tusz, lineWidth: 3))
     }
@@ -68,6 +68,8 @@ extension View {
 struct PrzyciskKreska: ButtonStyle {
     var kolor: Color = Kolory.zolty
     var maly = false
+    /// Własne wypełnienie zamiast koloru (np. pasek odliczania podpowiedzi).
+    var wypelnienie: AnyShapeStyle?
 
     func makeBody(configuration: Configuration) -> some View {
         let wcisniety = configuration.isPressed
@@ -79,7 +81,7 @@ struct PrzyciskKreska: ButtonStyle {
             .padding(.horizontal, maly ? 14 : 24)
             .padding(.vertical, maly ? 6 : 10)
             .frame(minHeight: maly ? 46 : 56)
-            .kreska(kolor)
+            .kreska(wypelnienie ?? AnyShapeStyle(kolor))
             .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 1 : 3, y: wcisniety ? 1 : 4))
             .offset(x: wcisniety ? 2 : 0, y: wcisniety ? 3 : 0)
             .contentShape(KsztaltKreski())
