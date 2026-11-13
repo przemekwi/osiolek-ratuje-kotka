@@ -54,7 +54,6 @@ struct Brawo: View {
                 .frame(maxWidth: 460).frame(height: 240)
                 .accessibilityLabel(stan.wynikDrogi ?? "")
                 .accessibilityHidden(stan.wynikDrogi == nil)
-            Text(stan.wynikBrawo).font(.kreda(18, gruby: false))
             Text(stan.wynikPodp).font(.kreda(18, gruby: false)).multilineTextAlignment(.center)
             if let d = stan.wynikDrogi { Text(d).font(.kreda(18, gruby: false)).multilineTextAlignment(.center) }
             Rzad {

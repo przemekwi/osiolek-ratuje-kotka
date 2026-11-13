@@ -41,7 +41,7 @@ struct StartView: View {
 
     private var przyciski: some View {
         VStack(spacing: 12) {
-            Button(stan.t("graj")) { stan.wDroge() }.buttonStyle(.kreska)
+            Button { stan.wDroge() } label: { Text(stan.t("graj")).frame(maxWidth: .infinity) }.buttonStyle(.kreska)
             PrzelacznikMotywu()
             WyborJezyka()
         }

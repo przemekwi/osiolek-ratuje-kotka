@@ -55,14 +55,21 @@ struct GraView: View {
 struct PasekGry: View {
     @Environment(StanGry.self) private var stan
 
+    // Jak w grze w trybie dla dziecka: poziom i przedmioty w pierwszym wierszu, zadanie pod spodem
+    // w kolorze wyróżnienia; bez zegara (tryb dla dziecka ukrywa czas).
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 16) { napisy }
-                VStack(alignment: .leading, spacing: 2) { napisy }
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 16) {
+                    Text(stan.t("poziom", ["n": stan.poziom])).font(.kreda(21))
+                    if stan.gra.sercaN > 0 { Zbierane() }
+                }
+                .foregroundStyle(Kolory.tekst)
+                Text(stan.napisZadania)
+                    .font(.kreda(19))
+                    .foregroundStyle(Kolory.zaznaczenie)
+                    .lineLimit(1).minimumScaleFactor(0.7)
             }
-            .font(.kreda(17))
-            .foregroundStyle(Kolory.tekst)
             Spacer(minLength: 4)
             Button { stan.pauza() } label: {
                 HStack(spacing: 6) {
@@ -73,13 +80,6 @@ struct PasekGry: View {
             .buttonStyle(.kreska(Kolory.zolty, maly: true))
         }
         .frame(maxWidth: 1200)
-    }
-
-    @ViewBuilder private var napisy: some View {
-        Text(stan.t("poziom", ["n": stan.poziom]))
-        Text(stan.napisZadania)
-        Text(stan.napisCzasu).monospacedDigit()
-        if stan.gra.sercaN > 0 { Zbierane() }
     }
 }
 
@@ -135,6 +135,7 @@ struct PlanszaView: View {
                         }
                     }
                     .frame(width: S.W, height: S.H)
+                    .background(Kolory.cien.offset(x: 4, y: 5))
                     .contentShape(Rectangle())
                     .gesture(palec(S))
                     .accessibilityElement()
