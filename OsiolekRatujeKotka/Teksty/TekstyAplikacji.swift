@@ -127,6 +127,14 @@ enum TekstyAplikacji {
             "de": "Für heute gibt es keine Verlängerung mehr.", "it": "Per oggi non ci sono altri prolungamenti.",
             "zh-Hans": "今天的延长次数已用完。", "zh-Hant": "今天的延長次數已用完。",
         ],
+        "ukryjStrzalki": [
+            "pl": "Ukryj strzałki", "en": "Hide arrows", "fr": "Masquer les flèches", "es": "Ocultar las flechas",
+            "de": "Pfeile ausblenden", "it": "Nascondi le frecce", "zh-Hans": "隐藏方向键", "zh-Hant": "隱藏方向鍵",
+        ],
+        "pokazStrzalki": [
+            "pl": "Pokaż strzałki", "en": "Show arrows", "fr": "Afficher les flèches", "es": "Mostrar las flechas",
+            "de": "Pfeile einblenden", "it": "Mostra le frecce", "zh-Hans": "显示方向键", "zh-Hant": "顯示方向鍵",
+        ],
         "ustawienia": [
             "pl": "Ustawienia", "en": "Settings", "fr": "Réglages", "es": "Ajustes",
             "de": "Einstellungen", "it": "Impostazioni", "zh-Hans": "设置", "zh-Hant": "設定",

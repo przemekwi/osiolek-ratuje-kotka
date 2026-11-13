@@ -50,6 +50,15 @@ final class StanGry {
     private(set) var podpGotowa = 0
     var muzyka = true { didSet { Syntezator.wspolny.muzyka = muzyka; if muzyka && ekran == .gra { Syntezator.wspolny.wlaczMuzyke() } } }
     var dzwieki = true { didSet { Syntezator.wspolny.dzwieki = dzwieki } }
+    /// Panel strzałek ukryty: plansza dostaje jego miejsce (sterowanie palcem i klawiaturą zostaje).
+    private(set) var strzalkiUkryte = false
+
+    func przelaczStrzalki() {
+        klik()
+        gra.pusc("przycisk")
+        withAnimation(.easeInOut(duration: 0.25)) { strzalkiUkryte.toggle() }
+        zapisz()
+    }
 
     @ObservationIgnored let gra = Rozgrywka()
     /// Rozmiar ramki planszy (punkty) — do wielkości labiryntu i geometrii.
@@ -78,7 +87,7 @@ final class StanGry {
     func zapisz() {
         var z = Zapis()
         z.zapisano = Date().timeIntervalSince1970
-        z.jezyk = jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki
+        z.jezyk = jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki; z.strzalkiUkryte = strzalkiUkryte
         z.koszulkaIndeks = koszulkaIndeks; z.kolorKoszulki = kolorKoszulki
         z.album = album; z.limit = limit
         z.poziom = poziom; z.trudnosc = gra.lab.trudnosc; z.pomocZRzedu = gra.lab.pomocZRzedu
@@ -94,7 +103,7 @@ final class StanGry {
               let z = try? JSONDecoder().decode(Zapis.self, from: dane) else { return }
         if let j = z.jezyk, Teksty.jezyki.contains(j) { jezyk = j }
         if let m = z.motyw, let w = WyborMotywu(rawValue: m) { motyw = w }
-        muzyka = z.muzyka; dzwieki = z.dzwieki
+        muzyka = z.muzyka; dzwieki = z.dzwieki; strzalkiUkryte = z.strzalkiUkryte ?? false
         koszulkaIndeks = z.koszulkaIndeks.flatMap { Koszulka.wszystkie.indices.contains($0) ? $0 : nil }
         kolorKoszulki = z.kolorKoszulki
         album = z.album
