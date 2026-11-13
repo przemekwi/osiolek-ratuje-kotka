@@ -26,6 +26,9 @@ struct GraView: View {
         .padding(8)
         .background(Kolory.tlo.ignoresSafeArea())
         .overlay(alignment: .top) { DymekOstrzezenia() }
+        // Gesty systemowe przy krawędziach (np. przesunięcie do ekranu głównego) wymagają drugiego przeciągnięcia,
+        // dzięki czemu dotyk strzałek przy dolnej krawędzi trafia do gry od razu, bez czekania systemu.
+        .defersSystemGestures(on: .all)
         .overlay { NakladkiGry() }
         .background(KlawiaturaSprzetowa { klawisz, wcisniety in obsluzKlawisz(klawisz, wcisniety) })
         .sensoryFeedback(.impact(weight: .light), trigger: stan.uderzenia)

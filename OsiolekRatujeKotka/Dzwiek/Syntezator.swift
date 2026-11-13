@@ -54,6 +54,9 @@ final class Syntezator {
         return true
     }
 
+    /// Uruchamia silnik dźwięku z wyprzedzeniem: start przy pierwszym kroku osiołka blokował na chwilę grę.
+    func przygotuj() { _ = uruchom() }
+
     func wstrzymaj() { if uruchomiony { silnik.pause() } }
     func wznow() { if uruchomiony { try? silnik.start() } }
 

@@ -8,6 +8,9 @@
 		<key>UIColorName</key>
 		<string>TloStartu</string>
 	</dict>
+	<!-- Pozwala na 120 klatek na sekundę na iPhonie z ekranem ProMotion (płynniejszy ruch osiołka). -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

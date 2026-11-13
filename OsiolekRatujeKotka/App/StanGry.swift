@@ -214,6 +214,7 @@ final class StanGry {
 
     /// „Graj”: najpierw szafa, jak w grze.
     func graj() {
+        dzwiek.przygotuj()
         klik()
         dzwiek.wlaczMuzyke()
         ekran = .szafa
@@ -427,6 +428,8 @@ final class ZegarGry: NSObject {
         guard link == nil else { return }
         ostatni = 0
         let l = CADisplayLink(target: self, selector: #selector(klatka(_:)))
+        // Ekrany 120 Hz (ProMotion): ruch osiołka liczony co klatkę ekranu, nie co drugą.
+        l.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
         l.add(to: .main, forMode: .common)
         link = l
     }
