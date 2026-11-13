@@ -1,5 +1,5 @@
 import XCTest
-@testable import OsiolekLogika
+@testable import OsiolekRatujeKotka
 
 final class AlbumTests: XCTestCase {
     func testPierwszaNaklejkaToOsiolek() {

@@ -1,5 +1,5 @@
 import XCTest
-@testable import OsiolekLogika
+@testable import OsiolekRatujeKotka
 
 final class LabiryntTests: XCTestCase {
     /// Każde pole labiryntu jest osiągalne z domku, a kotek stoi gdzie indziej.

@@ -28,11 +28,7 @@ instalacja PWA, pełny ekran, zdjęcia rysunków.
    Identyfikator pakietu to `pl.wilde.osiolek`; zmień go, jeśli jest zajęty.
 4. Wybierz symulator (np. iPhone 16 albo iPad) albo podłączone urządzenie i naciśnij **Run** (⌘R).
 
-Testy logiki (generator labiryntu, ruch, wygrana) działają bez symulatora:
-
-```bash
-swift test
-```
+Testy logiki (labirynt, ruch, podpowiedź, album, limit czasu, zapis): w Xcode **Product → Test** (⌘U).
 
 ## Dane z gry webowej
 
@@ -64,8 +60,7 @@ OsiolekRatujeKotka/
   Dzwiek/    Syntezator (dźwięki i muzyka z tonów, bez plików, jak Web Audio w grze)
   Teksty/    Jezyk (teksty z Teksty.json, odmiana „kroki”)
   Zasoby/    Teksty.json, Rysunki.json, Assets.xcassets
-Package.swift   logika jako biblioteka do testów (także na Linuksie)
-Testy/          testy jednostkowe logiki
+Testy/          testy jednostkowe logiki (cel OsiolekRatujeKotkaTests w projekcie Xcode)
 narzedzia/      eksport danych i ikony z gry webowej
 ```
 
@@ -94,7 +89,7 @@ Limit czasu dla dzieci 4–8 lat (rozbudowany względem strony; zasady ustalone 
   coraz krótsze (10 albo 5, potem 5 albo 3), najwyżej dwa dziennie;
 - licznik przetrwa zamknięcie aplikacji; pół godziny z zamkniętą aplikacją liczy się jako przerwa po sesji.
 
-Test w Xcode bez czekania: **Product → Scheme → Edit Scheme… → Run → Arguments** i dodaj `-szybkiLimit`
+Test w Xcode bez czekania: **Product → Scheme → Edit Scheme… → Run → Arguments** i zaznacz `-szybkiLimit`
 (tylko wersja Debug: czas limitu płynie 30× szybciej, 15 minut mija w 30 sekund).
 
 ## Biblioteki i licencje
