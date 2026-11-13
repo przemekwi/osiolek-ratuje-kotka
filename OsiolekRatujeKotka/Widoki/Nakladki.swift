@@ -5,7 +5,9 @@ struct NakladkiGry: View {
     @Environment(StanGry.self) private var stan
 
     var body: some View {
-        if let n = stan.nakladka {
+        if stan.nakladka == .oGrze {
+            OGrzeView { stan.nakladka = .menu }
+        } else if let n = stan.nakladka {
             GeometryReader { geo in
             ZStack {
                 Color.black.opacity(0.44).ignoresSafeArea()
@@ -15,6 +17,9 @@ struct NakladkiGry: View {
                         case .menu: MenuPauzy(rozmiarEkranu: geo.size)
                         case .brawo: Brawo(rozmiarEkranu: geo.size)
                         case .album: OknoAlbumu(rozmiarEkranu: geo.size)
+                        case .rozdzial: KoniecRozdzialu()
+                        case .krzak: WyjasnienieKrzaka()
+                        case .oGrze: EmptyView()
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 0)
@@ -57,6 +62,11 @@ struct MenuPauzy: View {
                         WyborJezyka()
                     }
                     GridRow {
+                        Button { stan.klik(); stan.nakladka = .oGrze } label: { Text(stan.t("oGrze")).frame(maxWidth: .infinity) }
+                            .buttonStyle(.kreska(Kolory.rozowy, maly: true))
+                            .gridCellColumns(2)
+                    }
+                    GridRow {
                         Button { stan.doStartu() } label: { Text(stan.t("wyjdz")).frame(maxWidth: .infinity) }
                             .buttonStyle(.kreska(Kolory.zielony, maly: true))
                             .gridCellColumns(2)
@@ -88,6 +98,7 @@ struct MenuPauzy: View {
                 PrzelacznikiDzwieku()
                 PrzelacznikMotywu()
                 WyborJezyka()
+                Button(stan.t("oGrze")) { stan.klik(); stan.nakladka = .oGrze }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
                 Button(stan.t("wyjdz")) { stan.doStartu() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
             }
             .frame(maxWidth: 420)
@@ -273,5 +284,60 @@ struct IkonaKoszulki: View {
         let k = stan.koszulka ?? Koszulka.wszystkie[0]
         Canvas { g, size in wpisz(Plotno(g), k.ramka, 1, 1, size.width - 2, size.height - 2) { c2, s in rysujKoszulke(c2, s, k, 1.2) } }
             .accessibilityHidden(true)
+    }
+}
+
+/// „Koniec rozdziału” co 5 poziomów: osiołek i kotek odpoczywają; dobry moment, żeby skończyć grę.
+struct KoniecRozdzialu: View {
+    @Environment(StanGry.self) private var stan
+    var body: some View {
+        Panel {
+            Text(stan.t("rozdzialH")).font(.kreda(28)).accessibilityAddTraits(.isHeader)
+            Canvas { g, size in
+                let c = Plotno(g), w = size.width, h = size.height
+                wpisz(c, SCENA_RAMKA, w * 0.46, 0, w * 0.54, h) { c2, s in rysujScene(c2, s) }
+                rysujOsiolka(c, 0, h * 0.18, w * 0.26, h * 0.82, stan.koszulka)
+                rysujKotka(c, w * 0.22, h * 0.6, w * 0.24, h * 0.4)
+            }
+            .frame(maxWidth: 420).frame(height: 180)
+            .accessibilityHidden(true)
+            Text(stan.t("rozdzialTekst")).font(.kreda(18, gruby: false)).multilineTextAlignment(.center)
+            Button(stan.t("rozdzialKoniec")) { stan.koniecRozdzialu() }.buttonStyle(.kreska(Kolory.zielony))
+            Button(stan.t("rozdzialDalej")) { stan.dalejPoRozdziale() }.buttonStyle(.kreska(Kolory.zolty, maly: true))
+        }
+        .foregroundStyle(Kolory.tekst)
+    }
+}
+
+/// Pierwszy krzaczek: serduszko → strzałka → znikający krzaczek (`pokazKrzakWyjasnienie`).
+struct WyjasnienieKrzaka: View {
+    @Environment(StanGry.self) private var stan
+    var body: some View {
+        Panel {
+            Text(stan.t("krzakH")).font(.kreda(28)).multilineTextAlignment(.center).accessibilityAddTraits(.isHeader)
+            Canvas { g, size in
+                let c = Plotno(g), w = size.width, h = size.height
+                wpisz(c, SERCE_RAMKA, w * 0.02, h * 0.12, w * 0.28, h * 0.76, rysujSerce)
+                let D = RYS["IKONY"]["strzalka"]
+                c.save()
+                wpisz(c, D["ramka"].liczby, w * 0.36, h * 0.25, w * 0.24, h * 0.5) { c2, s in
+                    piorko(c2, s, 1, 3)
+                    let sr = D["srodek"].liczby
+                    c2.translate(sr[0], sr[1]); c2.rotate(0 - D["kat"].liczba); c2.translate(-sr[0], -sr[1])
+                    for k in D["ksztalty"].tablica { ksztalt(c2, k.punkty, nil) }
+                    for l in D["linie"].tablica { linia(c2, l.punkty) }
+                    for o in D["owale"].tablica { owal(c2, o.liczby, nil) }
+                }
+                c.restore()
+                c.save(); c.globalAlpha = 0.35
+                wpisz(c, KRZAK_RAMKA, w * 0.66, h * 0.04, w * 0.3, h * 0.92, rysujKrzak)
+                c.restore()
+            }
+            .frame(maxWidth: 420).frame(height: 180)
+            .accessibilityLabel(stan.t("krzakTekst"))
+            Text(stan.t("krzakTekst")).font(.kreda(18, gruby: false)).multilineTextAlignment(.center)
+            Button(stan.t("krzakOk")) { stan.krzakOk() }.buttonStyle(.kreska)
+        }
+        .foregroundStyle(Kolory.tekst)
     }
 }

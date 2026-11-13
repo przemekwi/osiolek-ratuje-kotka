@@ -11,10 +11,10 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 | Etap | Zakres | Stan |
 |---|---|---|
 | 1 | Struktura projektu, generator labiryntu, ruch, kotek, domek, plansza z rysunkami, strzałki, palec, klawiatura, „Brawo” | gotowy, działa w symulatorze (iPhone 17, iOS 26.5) |
-| 2 | Krzaczek i serduszko, przedmioty, podpowiedź stopniowana z odliczaniem, porównanie drogi, dźwięki i muzyka | gotowy do sprawdzenia; brakuje wyjaśnienia krzaczka |
-| 3 | Tryb „Zaplanuj drogę z robotem” | do zrobienia |
-| 4 | Ekran startowy 1:1, szafa z koszulkami, menu, „O grze” | szafa i menu gotowe do sprawdzenia; brakuje „O grze” i przycisku trybu z robotem |
-| 5 | Album naklejek, koniec rozdziału co 5 poziomów | album gotowy do sprawdzenia; brakuje końca rozdziału |
+| 2 | Krzaczek i serduszko, przedmioty, podpowiedź stopniowana z odliczaniem, porównanie drogi, dźwięki i muzyka | gotowy |
+| 3 | Tryb „Zaplanuj drogę z robotem” | odłożony |
+| 4 | Ekran startowy, szafa z koszulkami, menu, „O grze” (wizytówka autora) | gotowy do sprawdzenia |
+| 5 | Album naklejek, koniec rozdziału co 5 poziomów, wyjaśnienie krzaczka | gotowy do sprawdzenia |
 | 6 | Limit czasu i przerwa z pytaniem dla rodzica, zapis ostatniego punktu | gotowy do sprawdzenia |
 
 Poza zakresem (decyzja właściciela): gra „Osiołek rozsypał karty” (osobna gra), udostępnianie i linki do witryny,

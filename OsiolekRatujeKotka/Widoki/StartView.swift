@@ -4,6 +4,7 @@ import SwiftUI
 struct StartView: View {
     @Environment(StanGry.self) private var stan
     @State private var oknoRodzica = false
+    @State private var oGrze = false
 
     var body: some View {
         GeometryReader { geo in
@@ -31,6 +32,7 @@ struct StartView: View {
         }
         .background(Kolory.tlo.ignoresSafeArea())
         .overlay { if oknoRodzica { OknoRodzica { oknoRodzica = false } } }
+        .overlay { if oGrze { OGrzeView { oGrze = false } } }
     }
 
     private func tytul(_ rozmiar: CGFloat) -> some View {
@@ -45,7 +47,11 @@ struct StartView: View {
         VStack(spacing: 12) {
             Button { stan.graj() } label: { Text(stan.t("graj")).frame(maxWidth: .infinity) }.buttonStyle(.kreska)
             PrzelacznikiDzwieku()
-            PrzelacznikMotywu()
+            // Jak na stronie: „Kolory” i „O grze” obok siebie.
+            Rzad {
+                PrzelacznikMotywu()
+                Button(stan.t("oGrze")) { stan.klik(); oGrze = true }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
+            }
             WyborJezyka()
             // Ustawienia limitu czasu za bramką rodzica.
             Button(stan.t("dlaRodzica")) { stan.klik(); oknoRodzica = true }

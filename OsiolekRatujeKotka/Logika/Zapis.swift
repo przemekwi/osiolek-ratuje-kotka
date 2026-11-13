@@ -37,6 +37,7 @@ struct Zapis: Codable, Equatable {
     var dzwieki = true
     /// Opcjonalne: starszy zapis bez tego pola nadal się odczytuje.
     var strzalkiUkryte: Bool?
+    var krzakWyjasniony: Bool?
     // Szafa i album
     var koszulkaIndeks: Int?
     var kolorKoszulki: String?

@@ -3,7 +3,7 @@ import UIKit
 import Observation
 
 enum Ekran { case start, szafa, gra }
-enum Nakladka: Equatable { case menu, brawo, album }
+enum Nakladka: Equatable { case menu, brawo, album, oGrze, rozdzial, krzak }
 enum WyborMotywu: String, CaseIterable { case system, jasny, ciemny }
 
 /// Stan aplikacji widoczny dla SwiftUI. Logika poziomu żyje w `Rozgrywka`; tu są ekrany, nakładki,
@@ -90,7 +90,8 @@ final class StanGry {
     func zapisz() {
         var z = Zapis()
         z.zapisano = Date().timeIntervalSince1970
-        z.jezyk = jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki; z.strzalkiUkryte = strzalkiUkryte
+        // Język zapisany tylko, gdy różni się od systemowego: inaczej gra idzie za językiem urządzenia.
+        z.jezyk = jezyk == Teksty.jezykUrzadzenia() ? nil : jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki; z.strzalkiUkryte = strzalkiUkryte; z.krzakWyjasniony = krzakWyjasniony
         z.koszulkaIndeks = koszulkaIndeks; z.kolorKoszulki = kolorKoszulki
         z.album = album; z.limit = limit
         z.poziom = poziom; z.trudnosc = gra.lab.trudnosc; z.pomocZRzedu = gra.lab.pomocZRzedu
@@ -106,7 +107,7 @@ final class StanGry {
               let z = try? JSONDecoder().decode(Zapis.self, from: dane) else { return }
         if let j = z.jezyk, Teksty.jezyki.contains(j) { jezyk = j }
         if let m = z.motyw, let w = WyborMotywu(rawValue: m) { motyw = w }
-        muzyka = z.muzyka; dzwieki = z.dzwieki; strzalkiUkryte = z.strzalkiUkryte ?? false
+        muzyka = z.muzyka; dzwieki = z.dzwieki; strzalkiUkryte = z.strzalkiUkryte ?? false; krzakWyjasniony = z.krzakWyjasniony ?? false
         koszulkaIndeks = z.koszulkaIndeks.flatMap { Koszulka.wszystkie.indices.contains($0) ? $0 : nil }
         kolorKoszulki = z.kolorKoszulki
         album = z.album
@@ -223,6 +224,12 @@ final class StanGry {
         dzwiek.nowaMelodia()
         odswiez()
         komunikat = t("start", ["n": poziom])
+        // Pierwszy krzaczek: obrazek „serduszko otwiera drogę” (jak `pokazKrzakWyjasnienie` w grze).
+        if gra.lab.przeszkoda.pole >= 0 && !krzakWyjasniony {
+            krzakWyjasniony = true
+            gra.pauza = true
+            nakladka = .krzak
+        }
         zapisz()
     }
 
@@ -278,11 +285,39 @@ final class StanGry {
         if czekaNaRamke && r.width > 0 && r.height > 0 { czekaNaRamke = false; zacznijPoziom() }
     }
 
+    /// Co 5 poziomów „Koniec rozdziału”: dobry moment, żeby skończyć grę (jak w trybie dla dziecka na stronie).
+    static let ROZDZIAL = 5
+
     func nastepnyPoziom() {
+        klik()
+        if poziom % StanGry.ROZDZIAL == 0 && nakladka != .rozdzial { nakladka = .rozdzial; return }
+        poziom += 1
+        zacznijPoziom()
+    }
+
+    /// „Gramy dalej” po końcu rozdziału.
+    func dalejPoRozdziale() {
         klik()
         poziom += 1
         zacznijPoziom()
     }
+
+    /// „Koniec gry” po końcu rozdziału: ekran startowy, a następna gra zacznie się od nowego poziomu.
+    func koniecRozdzialu() {
+        klik()
+        poziom += 1
+        gra.lab.G = []
+        zapisanaPlansza = nil
+        nakladka = nil
+        zapisz()
+        ekran = .start
+        zatrzymajZegar()
+    }
+
+    /// Wyjaśnienie krzaczka pokazane (tylko za pierwszym razem).
+    @ObservationIgnored private var krzakWyjasniony = false
+
+    func krzakOk() { klik(); nakladka = nil; gra.pauza = false }
 
     func pauza(cicho: Bool = false) {
         guard ekran == .gra else { return }
