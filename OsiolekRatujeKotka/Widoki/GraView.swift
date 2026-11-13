@@ -221,8 +221,8 @@ struct PrzyciskStrzalki: View {
         }
         .foregroundStyle(Kolory.napisPrzycisku)
         .frame(width: 90, height: 62)
-        .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 0 : 2, y: wcisniety ? 0 : 3))
         .kreska(Kolory.niebieski)
+        .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 0 : 2, y: wcisniety ? 0 : 3))
         .offset(y: wcisniety ? 2 : 0)
         .contentShape(KsztaltKreski())
         .gesture(

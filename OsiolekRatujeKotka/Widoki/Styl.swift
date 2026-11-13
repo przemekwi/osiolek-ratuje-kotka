@@ -79,8 +79,8 @@ struct PrzyciskKreska: ButtonStyle {
             .padding(.horizontal, maly ? 14 : 24)
             .padding(.vertical, maly ? 6 : 10)
             .frame(minHeight: maly ? 46 : 56)
-            .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 1 : 3, y: wcisniety ? 1 : 4))
             .kreska(kolor)
+            .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 1 : 3, y: wcisniety ? 1 : 4))
             .offset(x: wcisniety ? 2 : 0, y: wcisniety ? 3 : 0)
             .contentShape(KsztaltKreski())
     }
@@ -98,8 +98,8 @@ struct Panel<Tresc: View>: View {
         VStack(spacing: 12) { tresc }
             .padding(.horizontal, 20).padding(.vertical, 18)
             .frame(maxWidth: 640)
-            .background(KsztaltKreski().fill(Kolory.cien).offset(x: 4, y: 5))
             .kreska(Kolory.karta)
+            .background(KsztaltKreski().fill(Kolory.cien).offset(x: 4, y: 5))
             .padding(16)
     }
 }
