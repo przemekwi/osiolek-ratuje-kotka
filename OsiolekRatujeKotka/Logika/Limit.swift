@@ -11,7 +11,7 @@ enum KrokLimitu: Equatable { case nic, ostrzezenie, dokonczLabirynt, przerwa }
 ///   niż 60 — zalecenie WHO i Amerykańskiej Akademii Pediatrii dla małych dzieci to najwyżej godzina ekranu dziennie);
 /// - 2 minuty przed końcem łagodne ostrzeżenie; gra kończy się po bieżącym labiryncie, najpóźniej 2 minuty po czasie;
 /// - po sesji przerwa co najmniej 30 minut, potem dziecko gra dalej samo; po limicie dziennym — do następnego dnia;
-/// - przedłużenia wybiera rodzic za bramką (działanie zapisane słowami), coraz krótsze, najwyżej dwa dziennie.
+/// - przedłużenia wybiera rodzic za bramką (mnożenie z czterema odpowiedziami), coraz krótsze, najwyżej dwa dziennie.
 /// Stan jest zapisywany, więc ponowne uruchomienie aplikacji nie omija przerwy.
 struct Limit: Codable, Equatable {
     static let OPCJE_SESJI = [10, 15, 20, 30]
@@ -35,7 +35,7 @@ struct Limit: Codable, Equatable {
     var od = 0.0
     var ostrzezono = false
     var dogrywka = 0.0
-    /// Działanie dla rodzica: a + b, obie liczby 21–49 zapisane słowami.
+    /// Bramka rodzica: a × b (obie liczby 6–9) — dla dorosłego chwila, dla dziecka 4–8 lat za trudne.
     var a = 0
     var b = 0
 
@@ -66,7 +66,17 @@ struct Limit: Codable, Equatable {
     /// Czas do końca: sesji albo dnia, co pierwsze.
     var zostalo: Double { min(limitSesji - sesja, zostaloDnia) }
     var czasMinal: Bool { blokada == .brak && zostalo <= 0 }
-    var odpowiedz: Int { a + b }
+    var odpowiedz: Int { a * b }
+
+    /// Cztery odpowiedzi do wyboru: dobra i trzy bliskie (sąsiednie iloczyny), w losowej kolejności.
+    func opcje(_ los: inout Los) -> [Int] {
+        var w = [odpowiedz]
+        for k in los.tasuj([a, b, -a, -b, 1, -1, 10, -10]) where w.count < 4 {
+            let x = odpowiedz + k
+            if x > 0 && !w.contains(x) { w.append(x) }
+        }
+        return los.tasuj(w)
+    }
 
     static func kluczDnia(_ data: Date) -> String {
         let c = Calendar.current.dateComponents([.year, .month, .day], from: data)
@@ -103,8 +113,7 @@ struct Limit: Codable, Equatable {
     }
 
     mutating func nowePytanie(_ los: inout Los) {
-        func liczba() -> Int { let x = 21 + los.ri(29); return x % 10 == 0 ? x + 1 : x }
-        a = liczba(); b = liczba()
+        a = 6 + los.ri(4); b = 6 + los.ri(4)
     }
 
     func sprawdz(_ o: Int?) -> Bool { o == odpowiedz }

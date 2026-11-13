@@ -14,6 +14,16 @@ enum TekstyAplikacji {
             "zh-Hans": "给家长：请用阿拉伯数字输入这道用汉字写的加法的答案。",
             "zh-Hant": "給家長：請用阿拉伯數字輸入這道用國字寫的加法的答案。",
         ],
+        "rodzicMnozenie": [
+            "pl": "Dla rodzica: wybierz wynik mnożenia.",
+            "en": "For parents: choose the answer to this multiplication.",
+            "fr": "Pour les parents : choisissez le résultat de la multiplication.",
+            "es": "Para padres y madres: elige el resultado de la multiplicación.",
+            "de": "Für Eltern: Wählen Sie das Ergebnis der Multiplikation.",
+            "it": "Per i genitori: scegli il risultato della moltiplicazione.",
+            "zh-Hans": "给家长：请选出乘法的答案。",
+            "zh-Hant": "給家長：請選出乘法的答案。",
+        ],
         "ileTo": [
             "pl": "Ile to: {s}?", "en": "What is {s}?", "fr": "Combien font {s} ?", "es": "¿Cuánto es {s}?",
             "de": "Wie viel ist {s}?", "it": "Quanto fa {s}?", "zh-Hans": "{s}等于多少？", "zh-Hant": "{s}等於多少？",

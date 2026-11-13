@@ -1,38 +1,37 @@
 import SwiftUI
 
-/// Bramka rodzica: działanie zapisane słowami, odpowiedź cyframi. Przy błędzie nowe działanie.
+/// Bramka rodzica (zalecana przez Apple w kategorii dla dzieci): mnożenie i cztery odpowiedzi do wyboru,
+/// bez klawiatury. Przy błędzie nowe działanie.
 struct BramkaRodzica: View {
     @Environment(StanGry.self) private var stan
     let otwarta: () -> Void
-    @State private var odpowiedz = ""
     @State private var blad = false
-    @FocusState private var pole: Bool
 
     var body: some View {
         VStack(spacing: 8) {
-            Text(stan.t("rodzicDzialanie")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
-            Text(stan.pytanieRodzica).font(.kreda(18)).multilineTextAlignment(.center)
-            TextField("", text: $odpowiedz)
-                .keyboardType(.numberPad)
-                .font(.kreda(24))
-                .multilineTextAlignment(.center)
-                .frame(width: 120)
-                .padding(6)
-                .kreska(Kolory.karta)
-                .focused($pole)
-                .onSubmit(sprawdz)
-                .accessibilityLabel(stan.pytanieRodzica)
-            Button(stan.t("odblokuj"), action: sprawdz).buttonStyle(.kreska(Kolory.zielony, maly: true))
+            Text(stan.t("rodzicMnozenie")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
+            Text(stan.pytanieRodzica).font(.kreda(24)).multilineTextAlignment(.center)
+            Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                ForEach(0..<2, id: \.self) { rz in
+                    GridRow {
+                        ForEach(0..<2, id: \.self) { k in
+                            let i = rz * 2 + k
+                            if i < stan.opcjeBramki.count {
+                                let o = stan.opcjeBramki[i]
+                                Button {
+                                    if stan.odblokuj(o) { blad = false; otwarta() } else { blad = true }
+                                } label: { Text("\(o)").frame(minWidth: 70) }
+                                .buttonStyle(.kreska(Kolory.karta))
+                            }
+                        }
+                    }
+                }
+            }
             if blad { Text(stan.t("rodzicBlad")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche) }
         }
         .padding(12)
         .frame(maxWidth: .infinity)
         .kreska(Color.clear)
-    }
-
-    private func sprawdz() {
-        if stan.odblokuj(odpowiedz) { blad = false; pole = false; otwarta() } else { blad = true }
-        odpowiedz = ""
     }
 }
 

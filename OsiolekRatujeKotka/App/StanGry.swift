@@ -26,6 +26,9 @@ final class StanGry {
     private(set) var przerwaTrwa = false
     private(set) var blokada: Blokada = .brak
     private(set) var pytanieRodzica = ""
+    /// Cztery odpowiedzi do wyboru w bramce rodzica.
+    private(set) var opcjeBramki: [Int] = []
+    @ObservationIgnored private var ostatniaBramka = (0, 0)
     /// Po 30 minutach przerwy dziecko może samo grać dalej.
     private(set) var przerwaMinela = false
     /// Licznik ostrzeżeń „Jeszcze chwilka, potem przerwa” — pokazuje dymek nad planszą.
@@ -157,8 +160,8 @@ final class StanGry {
     }
 
     /// Odpowiedź rodzica na działanie; przy błędzie nowe działanie.
-    func odblokuj(_ tekst: String) -> Bool {
-        if limit.sprawdz(Int(tekst.trimmingCharacters(in: .whitespaces))) { klik(); return true }
+    func odblokuj(_ odpowiedz: Int) -> Bool {
+        if limit.sprawdz(odpowiedz) { klik(); return true }
         limit.nowePytanie(&gra.lab.los)
         odswiezPrzerwe()
         return false
@@ -193,9 +196,11 @@ final class StanGry {
     private func odswiezPrzerwe() {
         if przerwaTrwa != limit.zablokowana { przerwaTrwa = limit.zablokowana }
         if blokada != limit.blokada { blokada = limit.blokada }
-        let odstep = jezyk.hasPrefix("zh") ? "" : " "
-        let dzialanie = Limit.slownie(limit.a, jezyk) + odstep + t("plus") + odstep + Limit.slownie(limit.b, jezyk)
-        pytanieRodzica = t("ileTo", ["s": dzialanie])
+        pytanieRodzica = t("ileTo", ["s": "\(limit.a) × \(limit.b)"])
+        if (limit.a, limit.b) != ostatniaBramka {
+            ostatniaBramka = (limit.a, limit.b)
+            opcjeBramki = limit.opcje(&gra.lab.los)
+        }
         przerwaMinela = limit.przerwaMinela(teraz: Date().timeIntervalSince1970)
     }
 
