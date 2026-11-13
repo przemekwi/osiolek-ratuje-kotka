@@ -134,7 +134,7 @@ struct OGrzeView: View {
                     }
                 }
                 ForEach(ikony, id: \.self) { id in
-                    karta(nazwy[id].napis) { IkonaDziecka(id: id, kolor: TUSZ) }
+                    karta(nazwy[id].napis) { IkonaDziecka(id: id, kolor: Kolory.tusz) }
                 }
             }
         }

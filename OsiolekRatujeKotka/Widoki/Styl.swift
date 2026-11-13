@@ -73,9 +73,11 @@ struct PrzyciskKreska: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let wcisniety = configuration.isPressed
+        // Na tle karty napis w kolorze tekstu: w motywie ciemnym karta jest ciemna jak napis przycisku
+        // (ten sam problem gra webowa rozwiązuje osobnym tłem podpowiedzi).
         return configuration.label
             .font(.kreda(maly ? 17 : 22))
-            .foregroundStyle(Kolory.napisPrzycisku)
+            .foregroundStyle(kolor == Kolory.karta ? Kolory.tekst : Kolory.napisPrzycisku)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, maly ? 14 : 24)
