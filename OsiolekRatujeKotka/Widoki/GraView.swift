@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Ekran gry: pasek u góry, plansza i strzałki (pod planszą, a na niskim ekranie poziomo — obok niej).
 struct GraView: View {
@@ -24,6 +25,7 @@ struct GraView: View {
         }
         .padding(8)
         .background(Kolory.tlo.ignoresSafeArea())
+        .overlay(alignment: .top) { DymekOstrzezenia() }
         .overlay { NakladkiGry() }
         .background(KlawiaturaSprzetowa { klawisz, wcisniety in obsluzKlawisz(klawisz, wcisniety) })
         .sensoryFeedback(.impact(weight: .light), trigger: stan.uderzenia)
@@ -306,4 +308,34 @@ struct PrzyciskPodpowiedzi: View {
 extension Text {
     /// Napis przycisku na pasku: jak w grze mniejszy na telefonie, a gdy brakuje miejsca — lekko ściśnięty.
     func napisPaska() -> some View { font(.kreda(15)).lineLimit(1).minimumScaleFactor(0.6) }
+}
+
+/// „Jeszcze chwilka, potem przerwa.” — łagodne ostrzeżenie 2 minuty przed końcem czasu, widoczne przez 6 sekund.
+struct DymekOstrzezenia: View {
+    @Environment(StanGry.self) private var stan
+    @State private var widoczny = false
+
+    var body: some View {
+        Group {
+            if widoczny {
+                Text(stan.t("ostrzezenie"))
+                    .font(.kreda(18))
+                    .foregroundStyle(Kolory.napisPrzycisku)
+                    .padding(.horizontal, 18).padding(.vertical, 10)
+                    .kreska(Kolory.zolty)
+                    .padding(.top, 70)
+                    .transition(.opacity)
+                    .accessibilityAddTraits(.updatesFrequently)
+            }
+        }
+        .allowsHitTesting(false)
+        .onChange(of: stan.ostrzezenia) {
+            withAnimation(.easeInOut(duration: 0.3)) { widoczny = true }
+            UIAccessibility.post(notification: .announcement, argument: stan.t("ostrzezenie"))
+            Task {
+                try? await Task.sleep(for: .seconds(6))
+                withAnimation(.easeInOut(duration: 0.3)) { widoczny = false }
+            }
+        }
+    }
 }

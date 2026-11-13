@@ -2,42 +2,84 @@ import XCTest
 @testable import OsiolekLogika
 
 final class LimitTests: XCTestCase {
-    func testPrzerwaPo15MinutachIOdblokowanie() {
+    func testOstrzezenieIPrzerwaPoSesji() {
         var l = Limit(), los = Los(ziarno: 1)
-        XCTAssertFalse(l.licz(14 * 60))
-        XCTAssertTrue(l.licz(60))
+        l.nowyDzien("2026-11-14")
+        XCTAssertEqual(l.licz(12 * 60, wLabiryncie: false), .nic)
+        XCTAssertEqual(l.licz(60 + 1, wLabiryncie: false), .ostrzezenie)
+        XCTAssertEqual(l.licz(10, wLabiryncie: false), .nic)
+        XCTAssertEqual(l.licz(120, wLabiryncie: false), .przerwa)
         l.przerwa(teraz: 1000, &los)
-        XCTAssertTrue(l.zablokowana)
-        XCTAssertTrue((21...49).contains(l.liczba) && l.liczba % 10 != 0)
-        XCTAssertFalse(l.sprawdz(l.liczba + 1, teraz: 1010))
-        XCTAssertTrue(l.sprawdz(l.liczba, teraz: 1010))
+        XCTAssertEqual(l.blokada, .sesja)
+        XCTAssertTrue((21...49).contains(l.a) && (21...49).contains(l.b))
+        XCTAssertFalse(l.sprawdz(l.odpowiedz + 1))
+        XCTAssertTrue(l.sprawdz(l.odpowiedz))
+        XCTAssertFalse(l.przerwaMinela(teraz: 1000 + 29 * 60))
+        XCTAssertTrue(l.przerwaMinela(teraz: 1000 + 30 * 60))
+    }
+
+    func testDokonczenieLabiryntuNajwyzejDwieMinuty() {
+        var l = Limit()
+        l.nowyDzien("d")
+        _ = l.licz(15 * 60, wLabiryncie: true)
+        XCTAssertEqual(l.licz(1, wLabiryncie: true), .dokonczLabirynt)
+        XCTAssertEqual(l.licz(Limit.DOGRYWKA, wLabiryncie: true), .przerwa)
+    }
+
+    func testPrzedluzeniaCorazKrotszeNajwyzejDwa() {
+        var l = Limit(), los = Los(ziarno: 2)
+        l.nowyDzien("d")
+        _ = l.licz(15 * 60, wLabiryncie: false)
+        l.przerwa(teraz: 0, &los)
         XCTAssertEqual(l.opcjePrzedluzenia, [10, 5])
         l.przedluz(10)
+        _ = l.licz(5 * 60, wLabiryncie: false)   // dzień: 20 min z 30
         XCTAssertFalse(l.zablokowana)
+        _ = l.licz(5 * 60, wLabiryncie: false)
+        l.przerwa(teraz: 0, &los)
+        XCTAssertEqual(l.blokada, .sesja)
         XCTAssertEqual(l.opcjePrzedluzenia, [5])
         l.przedluz(5)
-        XCTAssertEqual(l.opcjePrzedluzenia, [3])
-        l.przedluz(3)
-        XCTAssertTrue(l.pokazDobro)
-    }
-
-    func testPrawdziwaPrzerwaPrzywracaPelnyLimit() {
-        var l = Limit(), los = Los(ziarno: 2)
-        _ = l.licz(Limit.LIMIT_S)
+        _ = l.licz(5 * 60, wLabiryncie: false)
         l.przerwa(teraz: 0, &los)
-        XCTAssertTrue(l.sprawdz(l.liczba, teraz: Limit.PRZERWA_S))
-        XCTAssertEqual(l.opcjePrzedluzenia, [15])
+        XCTAssertEqual(l.blokada, .dzien, "30 minut dnia wykorzystane")
+        XCTAssertEqual(l.opcjePrzedluzenia, [])
     }
 
-    func testZamknietaAplikacjaGodzinaToPrzerwa() {
-        var l = Limit()
-        _ = l.licz(600)
-        l.poPowrocie(zapisano: 0, teraz: Limit.PRZERWA_S + 1)
-        XCTAssertEqual(l.uplynelo, 0)
-        var z = Limit(), los = Los(ziarno: 3)
-        z.przerwa(teraz: 0, &los)
-        z.poPowrocie(zapisano: 0, teraz: 99_999)
-        XCTAssertTrue(z.zablokowana, "zablokowanej gry nie odblokowuje samo zamknięcie aplikacji")
+    func testLimitDnia() {
+        var l = Limit(), los = Los(ziarno: 3)
+        l.ustaw(sesja: 30, dzien: 20)
+        l.nowyDzien("d")
+        _ = l.licz(20 * 60, wLabiryncie: false)
+        l.przerwa(teraz: 0, &los)
+        XCTAssertEqual(l.blokada, .dzien)
+        XCTAssertFalse(l.przerwaMinela(teraz: 99_999))
+        l.ustaw(sesja: 30, dzien: 30)
+        XCTAssertFalse(l.zablokowana, "rodzic podniósł limit dnia")
+        l.ustaw(sesja: 30, dzien: 90)
+        XCTAssertLessThanOrEqual(l.dzienMin, 60)
+    }
+
+    func testNowyDzienIPowrotPoPrzerwie() {
+        var l = Limit(), los = Los(ziarno: 4)
+        l.nowyDzien("2026-11-14")
+        _ = l.licz(30 * 60, wLabiryncie: false)
+        l.przerwa(teraz: 0, &los)
+        XCTAssertEqual(l.blokada, .dzien)
+        l.poPowrocie(zapisano: 0, teraz: 10, dzien: "2026-11-15")
+        XCTAssertFalse(l.zablokowana)
+        XCTAssertEqual(l.dzisiaj, 0)
+        _ = l.licz(10 * 60, wLabiryncie: false)
+        l.poPowrocie(zapisano: 0, teraz: Limit.PRZERWA_PO_SESJI, dzien: "2026-11-15")
+        XCTAssertEqual(l.sesja, 0, "pół godziny z zamkniętą aplikacją to przerwa")
+        XCTAssertEqual(l.dzisiaj, 10 * 60, "ale czas dnia się nie zeruje")
+    }
+
+    func testStaryZapisSieOdczytuje() throws {
+        let stary = #"{"uplynelo":100,"liczba":27,"zablokowana":false}"#.data(using: .utf8)!
+        let l = try JSONDecoder().decode(Limit.self, from: stary)
+        XCTAssertEqual(l.sesjaMin, 15)
+        XCTAssertFalse(l.zablokowana)
     }
 
     func testLiczbySlownie() {

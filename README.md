@@ -84,10 +84,18 @@ Gra webowa niczego nie zapisuje. Aplikacja pamięta między uruchomieniami (plik
 tylko na urządzeniu): bieżący labirynt z położeniem osiołka i kotka, poziom i trudność, album, koszulkę, ustawienia
 oraz stan limitu czasu. Zapis następuje przy starcie poziomu, po wygranej, co 5 s gry i przy zejściu aplikacji z ekranu.
 
-Limit czasu działa jak na stronie: po 15 minutach gry (plansza i szafa) pojawia się przerwa, a odblokowuje ją rodzic,
-wpisując cyframi liczbę zapisaną słowami. Licznik przetrwa zamknięcie aplikacji, więc ponowne uruchomienie nie omija
-przerwy. Prawdziwa przerwa, czyli co najmniej godzina od zatrzymania gry albo od zamknięcia aplikacji, przywraca pełne
-15 minut.
+Limit czasu dla dzieci 4–8 lat (rozbudowany względem strony; zasady ustalone z właścicielem):
+- rodzic ustawia w „Dla rodzica” jedną sesję (10/15/20/30 min, domyślnie 15) i cały dzień (20/30/45/60 min,
+  domyślnie 30, nigdy więcej niż 60 — zalecenie WHO i AAP dla małych dzieci to najwyżej godzina ekranu dziennie);
+- 2 minuty przed końcem dymek „Jeszcze chwilka, potem przerwa”; gra kończy się po bieżącym labiryncie,
+  najpóźniej 2 minuty po czasie;
+- po sesji przerwa co najmniej 30 minut, potem dziecko gra dalej samo; po limicie dziennym — do jutra;
+- przedłużenia tylko za bramką rodzica (działanie zapisane słowami, np. „dwadzieścia siedem plus czternaście”),
+  coraz krótsze (10 albo 5, potem 5 albo 3), najwyżej dwa dziennie;
+- licznik przetrwa zamknięcie aplikacji; pół godziny z zamkniętą aplikacją liczy się jako przerwa po sesji.
+
+Test w Xcode bez czekania: **Product → Scheme → Edit Scheme… → Run → Arguments** i dodaj `-szybkiLimit`
+(tylko wersja Debug: czas limitu płynie 30× szybciej, 15 minut mija w 30 sekund).
 
 ## Biblioteki i licencje
 

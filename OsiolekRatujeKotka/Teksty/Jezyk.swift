@@ -16,6 +16,7 @@ enum Teksty {
     }
 
     static func surowy(_ jezyk: String, _ klucz: String) -> J {
+        if let t = TekstyAplikacji.tekst(jezyk, klucz) { return .napis(t) }
         let w = dane["teksty"][jezyk][klucz]
         return w.istnieje ? w : dane["teksty"]["pl"][klucz]
     }

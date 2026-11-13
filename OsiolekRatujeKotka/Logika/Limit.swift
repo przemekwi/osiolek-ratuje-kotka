@@ -1,74 +1,151 @@
 import Foundation
 
-/// Limit czasu dla dzieci (`LIMIT` z gry webowej).
-/// Po 15 minutach grania (plansza i szafa) gra się zatrzymuje. Odblokowuje rodzic: wpisuje cyframi liczbę 21–49 zapisaną
-/// słowami, czego dziecko w tym wieku jeszcze nie przeczyta. Przedłużenia wybiera rodzic; w trybie dla dziecka każde
-/// kolejne jest krótsze. Po prawdziwej przerwie (co najmniej godzina od zatrzymania gry) wraca pełny limit.
-/// W aplikacji stan limitu jest zapisywany, więc ponowne uruchomienie nie obchodzi przerwy.
-struct Limit: Codable, Equatable {
-    static let LIMIT_S = 15.0 * 60
-    static let PRZERWA_S = 60.0 * 60
+/// Rodzaj blokady: przerwa po sesji albo koniec grania na dziś.
+enum Blokada: String, Codable { case brak, sesja, dzien }
 
-    var uplynelo = 0.0
-    var liczba = 0
-    var zablokowana = false
-    var limit = Limit.LIMIT_S
-    var przedluzenia = 0
-    var razem = 0.0
+/// Co pętla gry ma zrobić po doliczeniu czasu.
+enum KrokLimitu: Equatable { case nic, ostrzezenie, dokonczLabirynt, przerwa }
+
+/// Limit czasu dla dzieci 4–8 lat (rozbudowany względem `LIMIT` z gry webowej, zasady ustalone z właścicielem):
+/// - rodzic ustawia sesję (10/15/20/30 min, domyślnie 15) i cały dzień (20/30/45/60 min, domyślnie 30, nigdy więcej
+///   niż 60 — zalecenie WHO i Amerykańskiej Akademii Pediatrii dla małych dzieci to najwyżej godzina ekranu dziennie);
+/// - 2 minuty przed końcem łagodne ostrzeżenie; gra kończy się po bieżącym labiryncie, najpóźniej 2 minuty po czasie;
+/// - po sesji przerwa co najmniej 30 minut, potem dziecko gra dalej samo; po limicie dziennym — do następnego dnia;
+/// - przedłużenia wybiera rodzic za bramką (działanie zapisane słowami), coraz krótsze, najwyżej dwa dziennie.
+/// Stan jest zapisywany, więc ponowne uruchomienie aplikacji nie omija przerwy.
+struct Limit: Codable, Equatable {
+    static let OPCJE_SESJI = [10, 15, 20, 30]
+    static let OPCJE_DNIA = [20, 30, 45, 60]
+    static let PRZERWA_PO_SESJI = 30.0 * 60
+    static let OSTRZEZENIE = 120.0
+    static let DOGRYWKA = 120.0
+    static let MAKS_PRZEDLUZEN = 2
+
+    var sesjaMin = 15
+    var dzienMin = 30
+    /// Dzień, którego dotyczy `dzisiaj` (rrrr-mm-dd).
+    var dzien = ""
+    var dzisiaj = 0.0
+    var sesja = 0.0
+    var limitSesji = 15.0 * 60
+    var przedluzeniaDzis = 0
+    var ostatnie = 0
+    var blokada: Blokada = .brak
     /// Chwila zatrzymania gry (sekundy od 1970).
     var od = 0.0
-    var ostatnie = 0
-    var poPrzerwie = false
+    var ostrzezono = false
+    var dogrywka = 0.0
+    /// Działanie dla rodzica: a + b, obie liczby 21–49 zapisane słowami.
+    var a = 0
+    var b = 0
 
-    /// Liczy czas gry; zwraca true, gdy właśnie trzeba zrobić przerwę.
-    mutating func licz(_ dt: Double) -> Bool {
-        guard !zablokowana else { return false }
-        uplynelo += dt; razem += dt
-        return uplynelo >= limit
+    init() {}
+
+    // Starszy zapis albo brak pól nie kasuje reszty zapisu: brakujące pola dostają wartości domyślne.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = Limit()
+        sesjaMin = (try? c.decode(Int.self, forKey: .sesjaMin)) ?? d.sesjaMin
+        dzienMin = (try? c.decode(Int.self, forKey: .dzienMin)) ?? d.dzienMin
+        dzien = (try? c.decode(String.self, forKey: .dzien)) ?? d.dzien
+        dzisiaj = (try? c.decode(Double.self, forKey: .dzisiaj)) ?? d.dzisiaj
+        sesja = (try? c.decode(Double.self, forKey: .sesja)) ?? d.sesja
+        limitSesji = (try? c.decode(Double.self, forKey: .limitSesji)) ?? Double(sesjaMin) * 60
+        przedluzeniaDzis = (try? c.decode(Int.self, forKey: .przedluzeniaDzis)) ?? 0
+        ostatnie = (try? c.decode(Int.self, forKey: .ostatnie)) ?? 0
+        blokada = (try? c.decode(Blokada.self, forKey: .blokada)) ?? .brak
+        od = (try? c.decode(Double.self, forKey: .od)) ?? 0
+        ostrzezono = (try? c.decode(Bool.self, forKey: .ostrzezono)) ?? false
+        dogrywka = (try? c.decode(Double.self, forKey: .dogrywka)) ?? 0
+        a = (try? c.decode(Int.self, forKey: .a)) ?? 0
+        b = (try? c.decode(Int.self, forKey: .b)) ?? 0
     }
 
-    mutating func nowePytanie(_ los: inout Los) {
-        liczba = 21 + los.ri(29)
-        if liczba % 10 == 0 { liczba += 1 }
+    var zablokowana: Bool { blokada != .brak }
+    var zostaloDnia: Double { max(0, Double(dzienMin) * 60 - dzisiaj) }
+    /// Czas do końca: sesji albo dnia, co pierwsze.
+    var zostalo: Double { min(limitSesji - sesja, zostaloDnia) }
+    var czasMinal: Bool { blokada == .brak && zostalo <= 0 }
+    var odpowiedz: Int { a + b }
+
+    static func kluczDnia(_ data: Date) -> String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: data)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
+    /// Nowy dzień: licznik dzienny od zera, a koniec grania z wczoraj przestaje obowiązywać.
+    mutating func nowyDzien(_ klucz: String) {
+        guard klucz != dzien else { return }
+        dzien = klucz; dzisiaj = 0; przedluzeniaDzis = 0; ostatnie = 0
+        if blokada == .dzien { blokada = .brak; nowaSesja() }
+    }
+
+    mutating func nowaSesja() {
+        sesja = 0; limitSesji = Double(sesjaMin) * 60; ostrzezono = false; dogrywka = 0
+    }
+
+    /// Liczy czas gry. `wLabiryncie`: dziecko jest w trakcie poziomu (wtedy może go dokończyć).
+    mutating func licz(_ dt: Double, wLabiryncie: Bool) -> KrokLimitu {
+        guard blokada == .brak else { return .nic }
+        sesja += dt; dzisiaj += dt
+        if zostalo <= 0 {
+            if wLabiryncie && dogrywka < Limit.DOGRYWKA { dogrywka += dt; return .dokonczLabirynt }
+            return .przerwa
+        }
+        if !ostrzezono && zostalo <= Limit.OSTRZEZENIE { ostrzezono = true; return .ostrzezenie }
+        return .nic
     }
 
     mutating func przerwa(teraz: Double, _ los: inout Los) {
-        zablokowana = true
+        blokada = zostaloDnia <= 0 ? .dzien : .sesja
         od = teraz
         nowePytanie(&los)
     }
 
-    /// Odpowiedź rodzica. Po co najmniej godzinie od zatrzymania gry liczy się jak prawdziwa przerwa.
-    mutating func sprawdz(_ odpowiedz: Int?, teraz: Double) -> Bool {
-        guard odpowiedz == liczba else { return false }
-        if teraz - od >= Limit.PRZERWA_S { przedluzenia = 0; razem = 0; ostatnie = 0; poPrzerwie = true }
-        return true
+    mutating func nowePytanie(_ los: inout Los) {
+        func liczba() -> Int { let x = 21 + los.ri(29); return x % 10 == 0 ? x + 1 : x }
+        a = liczba(); b = liczba()
     }
 
-    /// Przedłużenia do wyboru w trybie dla dziecka (gra zawsze w nim działa): po przerwie pełne 15 min,
-    /// potem 10 albo 5, po 10 — 5, po 5 — 3, potem po 3.
+    func sprawdz(_ o: Int?) -> Bool { o == odpowiedz }
+
+    /// Po 30 minutach przerwy (i gdy zostało coś z dnia) dziecko może grać dalej samo.
+    func przerwaMinela(teraz: Double) -> Bool { blokada == .sesja && teraz - od >= Limit.PRZERWA_PO_SESJI && zostaloDnia > 0 }
+
+    mutating func wznowPoPrzerwie() { blokada = .brak; nowaSesja() }
+
+    /// Przedłużenia do wyboru: najpierw 10 albo 5 min, potem 5 (po 10) albo 3; najwyżej dwa dziennie i nie ponad limit dnia.
     var opcjePrzedluzenia: [Int] {
-        if poPrzerwie { return [Int(Limit.LIMIT_S / 60)] }
-        if ostatnie == 0 || ostatnie >= 15 { return [10, 5] }
-        return ostatnie >= 10 ? [5] : [3]
+        guard blokada == .sesja, przedluzeniaDzis < Limit.MAKS_PRZEDLUZEN, zostaloDnia >= 60 else { return [] }
+        let baza = ostatnie == 0 ? [10, 5] : ostatnie >= 10 ? [5] : [3]
+        let maks = Int(zostaloDnia / 60)
+        var wynik: [Int] = []
+        for m in baza.map({ min($0, maks) }) where !wynik.contains(m) { wynik.append(m) }
+        return wynik
     }
-
-    /// „Pamiętaj: to ograniczenie jest dla dobra dziecka” — gdy przedłużenia doszły do 3 minut.
-    var pokazDobro: Bool { !poPrzerwie && ostatnie == 3 }
 
     mutating func przedluz(_ minuty: Int) {
-        limit = Double(minuty) * 60
-        uplynelo = 0
-        przedluzenia += 1
-        poPrzerwie = false
+        blokada = .brak
+        limitSesji = sesja + Double(minuty) * 60
+        przedluzeniaDzis += 1
         ostatnie = minuty
-        zablokowana = false
+        ostrzezono = false
+        dogrywka = 0
     }
 
-    /// Po odczytaniu zapisu: gdy aplikacja była zamknięta co najmniej godzinę, a gra nie była zablokowana,
-    /// to była prawdziwa przerwa — limit wraca do pełnych 15 minut.
-    mutating func poPowrocie(zapisano: Double, teraz: Double) {
-        if !zablokowana && teraz - zapisano >= Limit.PRZERWA_S { self = Limit() }
+    /// Ustawienia rodzica. Gdy nowy limit dzienny zostawia jeszcze czas, koniec grania na dziś przestaje obowiązywać.
+    mutating func ustaw(sesja s: Int, dzien d: Int) {
+        sesjaMin = Limit.OPCJE_SESJI.contains(s) ? s : 15
+        dzienMin = min(60, Limit.OPCJE_DNIA.contains(d) ? d : 30)
+        if blokada == .brak && przedluzeniaDzis == 0 { limitSesji = Double(sesjaMin) * 60 }
+        if blokada == .dzien && zostaloDnia > 0 { blokada = .brak; nowaSesja() }
+    }
+
+    /// Po odczytaniu zapisu: nowy dzień zeruje licznik dzienny, a co najmniej 30 minut z zamkniętą aplikacją
+    /// (gdy gra nie była zablokowana) to przerwa — zaczyna się nowa sesja.
+    mutating func poPowrocie(zapisano: Double, teraz: Double, dzien klucz: String) {
+        nowyDzien(klucz)
+        if blokada == .brak && teraz - zapisano >= Limit.PRZERWA_PO_SESJI { nowaSesja() }
     }
 
     /// Liczba 21–49 słowami w języku gry (`SLOWA` z gry).

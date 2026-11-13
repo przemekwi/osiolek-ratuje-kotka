@@ -12,7 +12,7 @@ enum WyborMotywu: String, CaseIterable { case system, jasny, ciemny }
 final class StanGry {
     var ekran: Ekran = .start
     var nakladka: Nakladka?
-    var jezyk: String = Teksty.jezykUrzadzenia() { didSet { if przerwaTrwa { odswiezPrzerwe() } } }
+    var jezyk: String = Teksty.jezykUrzadzenia() { didSet { odswiezPrzerwe() } }
     var motyw: WyborMotywu = .system
     /// Wybrana koszulka (indeks rysunku) i kolor z palety; nil — kolor z rysunku.
     var koszulkaIndeks: Int?
@@ -24,7 +24,14 @@ final class StanGry {
     /// widoki czytają `przerwaTrwa` i `pytanieRodzica`, które zmieniają się tylko przy przerwie.
     @ObservationIgnored private(set) var limit = Limit()
     private(set) var przerwaTrwa = false
+    private(set) var blokada: Blokada = .brak
     private(set) var pytanieRodzica = ""
+    /// Po 30 minutach przerwy dziecko może samo grać dalej.
+    private(set) var przerwaMinela = false
+    /// Licznik ostrzeżeń „Jeszcze chwilka, potem przerwa” — pokazuje dymek nad planszą.
+    private(set) var ostrzezenia = 0
+    /// Zmienia się po zmianie ustawień limitu (sam licznik nie jest obserwowany).
+    private(set) var wersjaLimitu = 0
 
     // Napisy paska, odświeżane przy zmianie.
     private(set) var poziom = 1
@@ -92,7 +99,7 @@ final class StanGry {
         kolorKoszulki = z.kolorKoszulki
         album = z.album
         var l = z.limit
-        l.poPowrocie(zapisano: z.zapisano, teraz: Date().timeIntervalSince1970)
+        l.poPowrocie(zapisano: z.zapisano, teraz: Date().timeIntervalSince1970, dzien: Limit.kluczDnia(Date()))
         limit = l
         odswiezPrzerwe()
         poziom = max(1, z.poziom)
@@ -105,6 +112,16 @@ final class StanGry {
     }
 
     // MARK: Przerwa dla dziecka
+    /// Do testów w Xcode: argument uruchomienia `-szybkiLimit` liczy czas 30× szybciej (15 minut mija w 30 s).
+    /// Tylko w wersji Debug; w wersji do sklepu zawsze 1.
+    static let przyspieszenieLimitu: Double = {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-szybkiLimit") ? 30 : 1
+        #else
+        return 1
+        #endif
+    }()
+
     private func przerwa() {
         limit.przerwa(teraz: Date().timeIntervalSince1970, &gra.lab.los)
         gra.puscWszystko()
@@ -114,29 +131,63 @@ final class StanGry {
         zapisz()
     }
 
-    /// Odpowiedź rodzica na pytanie o liczbę; przy błędzie nowe pytanie.
+    /// Nowy dzień i koniec 30-minutowej przerwy; wołane w pętli gry i co kilka sekund na ekranie przerwy.
+    func sprawdzPrzerwe() {
+        limit.nowyDzien(Limit.kluczDnia(Date()))
+        let minela = limit.przerwaMinela(teraz: Date().timeIntervalSince1970)
+        if minela != przerwaMinela { przerwaMinela = minela }
+        if limit.zablokowana != przerwaTrwa { odswiezPrzerwe() }
+    }
+
+    /// „Gramy dalej” po skończonej przerwie (bez bramki rodzica).
+    func grajPoPrzerwie() {
+        guard limit.przerwaMinela(teraz: Date().timeIntervalSince1970) else { return }
+        klik()
+        limit.wznowPoPrzerwie()
+        odblokowano()
+    }
+
+    /// Odpowiedź rodzica na działanie; przy błędzie nowe działanie.
     func odblokuj(_ tekst: String) -> Bool {
-        if limit.sprawdz(Int(tekst.trimmingCharacters(in: .whitespaces)), teraz: Date().timeIntervalSince1970) { klik(); return true }
+        if limit.sprawdz(Int(tekst.trimmingCharacters(in: .whitespaces))) { klik(); return true }
         limit.nowePytanie(&gra.lab.los)
         odswiezPrzerwe()
         return false
     }
 
-    /// „Koniec grania, przerwa”: gra zostaje zablokowana z nowym pytaniem.
+    /// „Koniec grania, przerwa”: gra zostaje zablokowana z nowym działaniem.
     func koniecGrania() { klik(); limit.nowePytanie(&gra.lab.los); odswiezPrzerwe() }
 
     func przedluz(_ minuty: Int) {
         klik()
         limit.przedluz(minuty)
+        odblokowano()
+    }
+
+    /// Ustawienia rodzica (sesja i dzień).
+    func ustawLimit(sesja: Int, dzien: Int) {
+        limit.ustaw(sesja: sesja, dzien: dzien)
+        wersjaLimitu += 1
+        if !limit.zablokowana && przerwaTrwa { odblokowano() } else { odswiezPrzerwe(); zapisz() }
+    }
+
+    private func odblokowano() {
         odswiezPrzerwe()
         dzwiek.wznow()
         if ekran == .gra && nakladka == nil { gra.pauza = false }
         zapisz()
     }
 
+    /// Nowe działanie dla bramki rodzica (np. przy wejściu do ustawień z ekranu startowego).
+    func nowaBramka() { limit.nowePytanie(&gra.lab.los); odswiezPrzerwe() }
+
     private func odswiezPrzerwe() {
-        przerwaTrwa = limit.zablokowana
-        pytanieRodzica = t("rodzicPytanie", ["s": Limit.slownie(limit.liczba, jezyk)])
+        if przerwaTrwa != limit.zablokowana { przerwaTrwa = limit.zablokowana }
+        if blokada != limit.blokada { blokada = limit.blokada }
+        let odstep = jezyk.hasPrefix("zh") ? "" : " "
+        let dzialanie = Limit.slownie(limit.a, jezyk) + odstep + t("plus") + odstep + Limit.slownie(limit.b, jezyk)
+        pytanieRodzica = t("ileTo", ["s": dzialanie])
+        przerwaMinela = limit.przerwaMinela(teraz: Date().timeIntervalSince1970)
     }
 
     let dzwiek = Syntezator.wspolny
@@ -280,8 +331,15 @@ final class StanGry {
     func zatrzymajZegar() { zegar?.stop() }
 
     private func tik(_ dt: Double) {
-        // Limit liczy czas na planszy i w szafie (jak `liczLimit` w grze).
-        if (ekran == .gra || ekran == .szafa) && !limit.zablokowana && limit.licz(min(0.05, dt)) { przerwa() }
+        // Limit liczy czas na planszy i w szafie (jak `liczLimit` w grze). Po czasie dziecko kończy bieżący labirynt.
+        if (ekran == .gra || ekran == .szafa) && !limit.zablokowana {
+            let wLabiryncie = ekran == .gra && (gra.faza == .szukaj || gra.faza == .prowadz) && !gra.lab.G.isEmpty
+            switch limit.licz(min(0.05, dt) * StanGry.przyspieszenieLimitu, wLabiryncie: wLabiryncie) {
+            case .ostrzezenie: ostrzezenia += 1
+            case .przerwa: przerwa()
+            case .nic, .dokonczLabirynt: break
+            }
+        }
         odZapisu += dt
         if odZapisu >= 5 { zapisz() }
         guard ekran == .gra, !gra.lab.G.isEmpty, !limit.zablokowana else { return }
@@ -325,7 +383,8 @@ final class StanGry {
         case .wygrana:
             dzwiek.brawo()
             album.dajNaklejke(&gra.lab.los)
-            zapisz()
+            // Czas minął w trakcie labiryntu: przerwa zaraz po wygranej (po odblokowaniu pokaże się „Brawo”).
+            if limit.czasMinal { przerwa() } else { zapisz() }
             faza = gra.faza; spotkania += 1
             brawoZa = gra.ograniczonyRuch ? 0.2 : gra.lab.trybGry == .plan ? 1.4 : 0.9
         }

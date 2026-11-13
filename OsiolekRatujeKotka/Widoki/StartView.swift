@@ -3,6 +3,7 @@ import SwiftUI
 /// Ekran startowy: okładka z rysunków dziecka, tytuł i przyciski (jak `#start` w grze).
 struct StartView: View {
     @Environment(StanGry.self) private var stan
+    @State private var oknoRodzica = false
 
     var body: some View {
         GeometryReader { geo in
@@ -29,6 +30,7 @@ struct StartView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .background(Kolory.tlo.ignoresSafeArea())
+        .overlay { if oknoRodzica { OknoRodzica { oknoRodzica = false } } }
     }
 
     private func tytul(_ rozmiar: CGFloat) -> some View {
@@ -45,6 +47,9 @@ struct StartView: View {
             PrzelacznikiDzwieku()
             PrzelacznikMotywu()
             WyborJezyka()
+            // Ustawienia limitu czasu za bramką rodzica.
+            Button(stan.t("dlaRodzica")) { stan.klik(); oknoRodzica = true }
+                .buttonStyle(.kreska(Kolory.rozowy, maly: true))
         }
         .frame(maxWidth: 420)
     }
