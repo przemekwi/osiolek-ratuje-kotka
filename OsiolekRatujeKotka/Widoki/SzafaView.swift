@@ -17,23 +17,30 @@ struct SzafaView: View {
                     HStack(alignment: .top, spacing: 12) {
                         PodgladOsiolka().frame(width: min(geo.size.width * 0.24, 190))
                         VStack(spacing: 6) {
-                            ScrollView { Koszulki(maly: true).padding(2) }
-                            PaletaKolorow(maly: true)
+                            ScrollView { Koszulki(maly: true).padding(2) }.scrollIndicators(.visible)
+                            PaletaKolorow(rozmiar: 36, kolumny: 10)
                         }
                     }
                 } else {
+                    // Telefon pionowo: mniejsze karty i paleta (jak w grze na wąskim ekranie), żeby szafa zmieściła się
+                    // bez przewijania; przewijanie zostaje na mały ekran albo dużą czcionkę systemową.
+                    let waski = geo.size.width < 500
                     ScrollView {
-                        VStack(spacing: 18) {
+                        VStack(spacing: waski ? 10 : 18) {
                             VStack(spacing: 6) {
                                 PodgladOsiolka()
-                                    .frame(width: min(geo.size.width * 0.64, 280), height: min(geo.size.width * 0.82, 360, geo.size.height * 0.44))
-                                PaletaKolorow(maly: false)
+                                    .frame(width: min(geo.size.width * 0.64, 280),
+                                           height: min(geo.size.width * 0.82, 360, geo.size.height * (waski ? 0.25 : 0.44)))
+                                PaletaKolorow(rozmiar: waski ? 40 : 48, kolumny: 5)
                             }
-                            Koszulki(maly: false)
+                            Koszulki(maly: waski)
                         }
                         .frame(maxWidth: 1100)
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 2)
                     }
+                    .scrollIndicators(.visible)
+                    .scrollBounceBehavior(.basedOnSize)
                 }
                 // „W drogę” zawsze na ekranie, także gdy koszulki się nie mieszczą.
                 Rzad {
@@ -74,9 +81,9 @@ struct Koszulki: View {
                 stan.klik(); stan.koszulkaIndeks = nil
             } label: {
                 Text(stan.t("bezKoszulki"))
-                    .font(.kreda(maly ? 12 : 15))
+                    .font(.kreda(maly ? 13 : 15))
                     .multilineTextAlignment(.center)
-                    .frame(width: szer - 12, height: obraz + 24)
+                    .frame(width: szer - 12, height: obraz + 20)
             }
             .buttonStyle(PrzyciskKoszulki(wybrany: stan.koszulkaIndeks == nil))
             .accessibilityAddTraits(stan.koszulkaIndeks == nil ? .isSelected : [])
@@ -118,12 +125,11 @@ struct PrzyciskKoszulki: ButtonStyle {
 /// Paleta 10 kolorów dla wybranej koszulki; ponowne stuknięcie wraca do koloru z rysunku.
 struct PaletaKolorow: View {
     @Environment(StanGry.self) private var stan
-    let maly: Bool
+    let rozmiar: CGFloat
+    let kolumny: Int
 
     var body: some View {
         if let n = stan.koszulkaIndeks {
-            let rozmiar: CGFloat = maly ? 36 : 48
-            let kolumny = maly ? 10 : 5
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(rozmiar), spacing: 4), count: kolumny), spacing: 4) {
                 ForEach(KOLORY_KOSZULKI.indices, id: \.self) { i in
                     let kolor = KOLORY_KOSZULKI[i]
