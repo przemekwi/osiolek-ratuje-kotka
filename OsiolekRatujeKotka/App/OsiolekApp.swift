@@ -19,6 +19,9 @@ struct OsiolekApp: App {
                 if stan.przerwaTrwa { PrzerwaView() }
             }
             .environment(stan)
+            // Duża czcionka systemowa powiększa napisy, ale najwyżej do „xxLarge”: przyciski i plansza mają stałe
+            // wymiary, a przy największych rozmiarach napisy wychodziłyby poza przyciski.
+            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
             .preferredColorScheme(stan.schematKolorow)
             .environment(\.locale, Locale(identifier: stan.jezyk))
             .persistentSystemOverlays(.hidden)
