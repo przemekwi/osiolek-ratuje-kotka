@@ -41,6 +41,7 @@ struct ObrazNaklejki: View {
 /// Przyklejone naklejki też da się przesuwać palcem.
 struct OknoAlbumu: View {
     @Environment(StanGry.self) private var stan
+    let rozmiarEkranu: CGSize
     @State private var ramkaAlbumu: CGRect = .zero
     @State private var ciagnieta: (id: String, punkt: CGPoint)?
     @State private var przesuwana: (id: String, dx: Double, dy: Double)?
@@ -50,9 +51,11 @@ struct OknoAlbumu: View {
         let album = stan.album
         Panel {
             Text(stan.t("albumH")).font(.kreda(28)).foregroundStyle(Kolory.tekst).accessibilityAddTraits(.isHeader)
+            // Stały rozmiar zależny tylko od ekranu: zmiany pod albumem (tacka, napisy) go nie skalują.
+            let proporcja = ALBUM_RAMKA[2] / ALBUM_RAMKA[3]
+            let szer = max(240, min(560, rozmiarEkranu.width - 72, max(240, rozmiarEkranu.height - 440) * proporcja))
             Canvas { g, size in rysujAlbumNaklejek(Plotno(g), size.width, size.height, album) }
-                .aspectRatio(ALBUM_RAMKA[2] / ALBUM_RAMKA[3], contentMode: .fit)
-                .frame(maxWidth: 560)
+                .frame(width: szer, height: szer / proporcja)
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(przestrzen)) } action: { ramkaAlbumu = $0 }
                 .gesture(gestAlbumu)
                 .accessibilityElement()

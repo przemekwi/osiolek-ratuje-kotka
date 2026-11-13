@@ -6,6 +6,7 @@ struct NakladkiGry: View {
 
     var body: some View {
         if let n = stan.nakladka {
+            GeometryReader { geo in
             ZStack {
                 Color.black.opacity(0.44).ignoresSafeArea()
                 ScrollView {
@@ -13,13 +14,14 @@ struct NakladkiGry: View {
                         switch n {
                         case .menu: MenuPauzy()
                         case .brawo: Brawo()
-                        case .album: OknoAlbumu()
+                        case .album: OknoAlbumu(rozmiarEkranu: geo.size)
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 0)
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .defaultScrollAnchor(.center)
+            }
             }
             .transition(.opacity)
         }

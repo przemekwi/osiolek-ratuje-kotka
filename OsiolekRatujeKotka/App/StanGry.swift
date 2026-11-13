@@ -163,6 +163,8 @@ final class StanGry {
         poziom = 1
         gra.lab.trudnosc = 1
         gra.lab.pomocZRzedu = 0
+        // Nowa gra to także nowy, pusty album (na stronie album znika dopiero po zamknięciu karty).
+        album = AlbumNaklejek()
         zacznijPoziom()
     }
 
