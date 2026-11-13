@@ -99,7 +99,9 @@ struct Limit: Codable, Equatable {
         guard blokada == .brak else { return .nic }
         sesja += dt; dzisiaj += dt
         if zostalo <= 0 {
-            if wLabiryncie && dogrywka < Limit.DOGRYWKA { dogrywka += dt; return .dokonczLabirynt }
+            // Dogrywka to czas, który minął po przekroczeniu limitu (sesji albo dnia): najwyżej 2 minuty na dokończenie.
+            dogrywka = -zostalo
+            if wLabiryncie && dogrywka < Limit.DOGRYWKA { return .dokonczLabirynt }
             return .przerwa
         }
         if !ostrzezono && zostalo <= Limit.OSTRZEZENIE { ostrzezono = true; return .ostrzezenie }
