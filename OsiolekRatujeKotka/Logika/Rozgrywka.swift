@@ -270,3 +270,33 @@ final class Rozgrywka {
         naZdarzenie?(.wygrana)
     }
 }
+
+extension Rozgrywka {
+    /// Ułożenie planszy nie pasuje do ramki (np. labirynt pionowy na ekranie poziomym).
+    func zlyKsztalt(szer: Double, wys: Double) -> Bool {
+        guard !lab.G.isEmpty, lab.TW != lab.TH, szer > 0, wys > 0 else { return false }
+        return (szer > wys) != (lab.TW > lab.TH)
+    }
+
+    /// Odbija bieżący poziom względem przekątnej (kolumny ↔ wiersze): ta sama plansza z tymi samymi drogami
+    /// i postaciami, ułożona wzdłuż ekranu po obrocie (nowość względem gry webowej, która zostawia pionową planszę).
+    func transponuj() {
+        let tw = lab.TW, th = lab.TH
+        func t(_ i: Int) -> Int { i < 0 ? i : (i % tw) * th + i / tw }
+        var g = [UInt8](repeating: 1, count: tw * th)
+        for i in 0..<(tw * th) { g[t(i)] = lab.G[i] }
+        lab.G = g; lab.TW = th; lab.TH = tw
+        lab.domI = t(lab.domI); lab.kotekI = t(lab.kotekI)
+        lab.przeszkoda.pole = t(lab.przeszkoda.pole); lab.przeszkoda.klucz = t(lab.przeszkoda.klucz)
+        func r(_ o: Ruchomy) -> Ruchomy { Ruchomy(pole: t(o.pole), x: o.y, y: o.x, cel: t(o.cel)) }
+        osiol = r(osiol); kot = r(kot)
+        serca = serca.map(t); trasa = trasa.map(t)
+        slady = slady.map { Slad(i: t($0.i), k: $0.k) }
+        // Kąt łapki po odbiciu: atan2 z zamienionymi osiami.
+        droga = droga?.map { LapkaPodp(i: t($0.i), kat: 3 * .pi / 2 - $0.kat) }
+        if let p = porownanie { porownanie = Porownanie(twoja: p.twoja.map(t), najkrotsza: p.najkrotsza.map(t)) }
+        podp.cel = -1
+        geo = nil
+        lab.wersja += 1
+    }
+}

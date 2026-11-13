@@ -115,3 +115,18 @@ final class RozgrywkaTests: XCTestCase {
         XCTAssertEqual(g.sx(1.5), (g.sx(1) + g.sx(2)) / 2, accuracy: 1e-9)
     }
 }
+
+final class TranspozycjaTests: XCTestCase {
+    func testDwaOdbiciaDajaTenSamPoziom() {
+        let r = Rozgrywka(lab: Labirynt(los: Los(ziarno: 21)))
+        r.lab.trudnosc = 5
+        r.zacznijPoziom(szer: 400, wys: 800)
+        let G = r.lab.G, kot = r.lab.kotekI, tw = r.lab.TW
+        XCTAssertTrue(r.zlyKsztalt(szer: 800, wys: 400))
+        r.transponuj()
+        XCTAssertFalse(r.zlyKsztalt(szer: 800, wys: 400))
+        XCTAssertEqual(r.lab.bfs(r.lab.domI, bezKrzaka: true)[r.lab.kotekI] >= 0, true)
+        r.transponuj()
+        XCTAssertEqual(r.lab.G, G); XCTAssertEqual(r.lab.kotekI, kot); XCTAssertEqual(r.lab.TW, tw)
+    }
+}

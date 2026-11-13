@@ -253,6 +253,7 @@ final class StanGry {
             // Powrót do zapisanego labiryntu w tym samym miejscu.
             zapisanaPlansza = nil
             gra.przywroc(p)
+            if gra.zlyKsztalt(szer: ramka.width, wys: ramka.height) { gra.transponuj() }
             gra.poziom = poziom
             dzwiek.nowaMelodia()
             odswiez()
@@ -264,6 +265,11 @@ final class StanGry {
 
     func ustawRamke(_ r: CGSize) {
         ramka = r
+        // Obrót ekranu albo ukrycie strzałek: ta sama plansza ułożona wzdłuż ekranu.
+        if gra.zlyKsztalt(szer: r.width, wys: r.height) {
+            gra.transponuj()
+            wersja = gra.lab.wersja
+        }
         if czekaNaRamke && r.width > 0 && r.height > 0 { czekaNaRamke = false; zacznijPoziom() }
     }
 
