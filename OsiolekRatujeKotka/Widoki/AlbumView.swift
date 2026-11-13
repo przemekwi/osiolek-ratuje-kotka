@@ -164,7 +164,9 @@ struct Tacka: View {
     let przyklej: (String, CGPoint) -> Void
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 64, maximum: 64), spacing: 6)], spacing: 6) {
+        // Zwykły układ z zawijaniem zamiast LazyVGrid: rozmiar tacki jest znany od razu, więc okno albumu
+        // nie zmienia wielkości po otwarciu.
+        Zawijanie(odstep: 6) {
             ForEach(stan.album.naTacce, id: \.id) { n in
                 let wybrana = stan.album.wybrana == n.id
                 ObrazNaklejki(id: n.id)
@@ -190,6 +192,45 @@ struct Tacka: View {
             }
         }
         .frame(maxWidth: 560)
+    }
+}
+
+/// Elementy w rzędach, zawijane do nowego rzędu, gdy brakuje miejsca (jak flex-wrap w grze), wyśrodkowane.
+struct Zawijanie: Layout {
+    var odstep: CGFloat = 6
+
+    private func rzedy(_ szer: CGFloat, _ widoki: Subviews) -> [[(Int, CGSize)]] {
+        var wynik: [[(Int, CGSize)]] = [[]]
+        var x: CGFloat = 0
+        for (i, v) in widoki.enumerated() {
+            let r = v.sizeThatFits(.unspecified)
+            if x > 0 && x + r.width > szer { wynik.append([]); x = 0 }
+            wynik[wynik.count - 1].append((i, r))
+            x += r.width + odstep
+        }
+        return wynik
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let szer = proposal.width ?? .infinity
+        let r = rzedy(szer, subviews)
+        let w = r.map { rz in rz.reduce(0) { $0 + $1.1.width } + odstep * CGFloat(max(0, rz.count - 1)) }.max() ?? 0
+        let h = r.map { rz in rz.map(\.1.height).max() ?? 0 }.reduce(0, +) + odstep * CGFloat(max(0, r.count - 1))
+        return CGSize(width: min(w, szer), height: h)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for rz in rzedy(bounds.width, subviews) {
+            let w = rz.reduce(0) { $0 + $1.1.width } + odstep * CGFloat(max(0, rz.count - 1))
+            let h = rz.map(\.1.height).max() ?? 0
+            var x = bounds.minX + (bounds.width - w) / 2
+            for (i, r) in rz {
+                subviews[i].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(r))
+                x += r.width + odstep
+            }
+            y += h + odstep
+        }
     }
 }
 
