@@ -76,14 +76,18 @@ struct PasekGry: View {
     private var napisy: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 16) {
-                Text(stan.t("poziom", ["n": stan.poziom])).font(.kreda(21))
+                Text(stan.t("poziom", ["n": stan.poziom])).font(.kreda(21)).lineLimit(1).fixedSize()
                 if stan.gra.sercaN > 0 { Zbierane() }
             }
+            .frame(height: 30, alignment: .leading)
             .foregroundStyle(Kolory.tekst)
+            // Zadanie zawsze w jednym wierszu o stałej wysokości (jak w grze): zmiana „Znajdź kotka” na „Wróć z kotkiem
+            // do domku” nie zmienia wysokości paska, więc plansza nie przelicza rozmiaru w trakcie poziomu.
             Text(stan.napisZadania)
                 .font(.kreda(19))
                 .foregroundStyle(Kolory.zaznaczenie)
-                .lineLimit(1).minimumScaleFactor(0.7)
+                .lineLimit(1).minimumScaleFactor(0.75).truncationMode(.tail)
+                .frame(height: 26, alignment: .leading)
         }
     }
 
