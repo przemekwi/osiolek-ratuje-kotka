@@ -49,12 +49,45 @@ struct OknoAlbumu: View {
 
     var body: some View {
         let album = stan.album
-        Panel {
-            Text(stan.t("albumH")).font(.kreda(28)).foregroundStyle(Kolory.tekst).accessibilityAddTraits(.isHeader)
-            // Stały rozmiar zależny tylko od ekranu: zmiany pod albumem (tacka, napisy) go nie skalują.
-            let proporcja = ALBUM_RAMKA[2] / ALBUM_RAMKA[3]
-            let szer = max(240, min(560, rozmiarEkranu.width - 72, max(240, rozmiarEkranu.height - 440) * proporcja))
-            Canvas { g, size in rysujAlbumNaklejek(Plotno(g), size.width, size.height, album) }
+        let poziomo = rozmiarEkranu.width > rozmiarEkranu.height && rozmiarEkranu.height <= 700
+        Group {
+            if poziomo {
+                // Telefon poziomo: album po lewej, tacka i przyciski po prawej (jak w grze).
+                Panel(maksSzerokosc: 920) {
+                    HStack(alignment: .center, spacing: 16) {
+                        obrazAlbumu(szer: max(200, min((rozmiarEkranu.width - 120) / 2, (rozmiarEkranu.height - 60) * proporcja)))
+                        VStack(spacing: 6) { tytul(20); reszta(album) }.frame(maxWidth: .infinity)
+                    }
+                }
+            } else {
+                Panel {
+                    tytul(28)
+                    obrazAlbumu(szer: max(240, min(560, rozmiarEkranu.width - 72, max(240, rozmiarEkranu.height - 440) * proporcja)))
+                    reszta(album)
+                }
+            }
+        }
+        .coordinateSpace(.named(przestrzen))
+        .overlay(alignment: .topLeading) {
+            // Naklejka „w palcu” idzie za palcem po ekranie.
+            if let c = ciagnieta {
+                ObrazNaklejki(id: c.id).frame(width: 84, height: 84)
+                    .position(c.punkt)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    private var proporcja: Double { ALBUM_RAMKA[2] / ALBUM_RAMKA[3] }
+
+    private func tytul(_ r: CGFloat) -> some View {
+        Text(stan.t("albumH")).font(.kreda(r)).foregroundStyle(Kolory.tekst).accessibilityAddTraits(.isHeader)
+    }
+
+    /// Album ma stały rozmiar zależny tylko od ekranu: zmiany pod albumem (tacka, napisy) go nie skalują.
+    private func obrazAlbumu(szer: Double) -> some View {
+        let album = stan.album
+        return Canvas { g, size in rysujAlbumNaklejek(Plotno(g), size.width, size.height, album) }
                 .frame(width: szer, height: szer / proporcja)
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(przestrzen)) } action: { ramkaAlbumu = $0 }
                 .gesture(gestAlbumu)
@@ -68,6 +101,9 @@ struct OknoAlbumu: View {
                         stan.album.przyklej(id, m.0, m.1); stan.klik()
                     }
                 }
+    }
+
+    @ViewBuilder private func reszta(_ album: AlbumNaklejek) -> some View {
             if !album.naTacce.isEmpty {
                 Text(stan.t("tackaH")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche)
                 Tacka(przestrzen: przestrzen, ramkaAlbumu: ramkaAlbumu, ciagnieta: $ciagnieta, przyklej: przyklejZTacki)
@@ -79,16 +115,6 @@ struct OknoAlbumu: View {
                 .font(.kreda(18)).foregroundStyle(Kolory.tekst).multilineTextAlignment(.center)
             Text(stan.t("albumWskazowka")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
             Button(stan.t("wroc")) { stan.zamknijAlbum() }.buttonStyle(.kreska)
-        }
-        .coordinateSpace(.named(przestrzen))
-        .overlay(alignment: .topLeading) {
-            // Naklejka „w palcu” idzie za palcem po ekranie.
-            if let c = ciagnieta {
-                ObrazNaklejki(id: c.id).frame(width: 84, height: 84)
-                    .position(c.punkt)
-                    .allowsHitTesting(false)
-            }
-        }
     }
 
     private func nazwa(_ id: String) -> String { Teksty.surowy(stan.jezyk, "nazwy")[id].napis }

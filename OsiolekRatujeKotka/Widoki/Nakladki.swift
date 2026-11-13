@@ -13,7 +13,7 @@ struct NakladkiGry: View {
                     Group {
                         switch n {
                         case .menu: MenuPauzy()
-                        case .brawo: Brawo()
+                        case .brawo: Brawo(rozmiarEkranu: geo.size)
                         case .album: OknoAlbumu(rozmiarEkranu: geo.size)
                         }
                     }
@@ -54,16 +54,47 @@ struct MenuPauzy: View {
 struct Brawo: View {
     @Environment(StanGry.self) private var stan
     @Environment(\.colorScheme) private var schemat
+    let rozmiarEkranu: CGSize
+
+    /// Telefon poziomo: obrazek po lewej, reszta po prawej (jak `#brawo .panel` w grze na niskim ekranie).
+    private var poziomo: Bool { rozmiarEkranu.width > rozmiarEkranu.height && rozmiarEkranu.height <= 700 }
 
     var body: some View {
-        Panel {
-            Text(stan.tytulBrawo).font(.kreda(28)).foregroundStyle(Kolory.tekst).multilineTextAlignment(.center)
-            ObrazBrawo(ciemny: schemat == .dark)
-                .frame(maxWidth: 460).frame(height: 240)
-                .accessibilityLabel(stan.wynikDrogi ?? "")
-                .accessibilityHidden(stan.wynikDrogi == nil)
-            Text(stan.wynikPodp).font(.kreda(18, gruby: false)).multilineTextAlignment(.center)
-            if let d = stan.wynikDrogi { Text(d).font(.kreda(18, gruby: false)).multilineTextAlignment(.center) }
+        if poziomo {
+            Panel(maksSzerokosc: 920) {
+                HStack(alignment: .center, spacing: 16) {
+                    obraz.frame(maxWidth: .infinity).frame(height: min(240, rozmiarEkranu.height * 0.64))
+                    VStack(spacing: 6) {
+                        tytul(20)
+                        opis
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .foregroundStyle(Kolory.tekst)
+        } else {
+            Panel {
+                tytul(28)
+                obraz.frame(maxWidth: 460).frame(height: min(240, rozmiarEkranu.height * 0.3))
+                opis
+            }
+            .foregroundStyle(Kolory.tekst)
+        }
+    }
+
+    private func tytul(_ r: CGFloat) -> some View {
+        Text(stan.tytulBrawo).font(.kreda(r)).foregroundStyle(Kolory.tekst).multilineTextAlignment(.center)
+    }
+
+    private var obraz: some View {
+        ObrazBrawo(ciemny: schemat == .dark)
+            .accessibilityLabel(stan.wynikDrogi ?? "")
+            .accessibilityHidden(stan.wynikDrogi == nil)
+    }
+
+    @ViewBuilder private var opis: some View {
+            Text(stan.wynikPodp).font(.kreda(poziomo ? 15 : 18, gruby: false)).multilineTextAlignment(.center)
+            if let d = stan.wynikDrogi { Text(d).font(.kreda(poziomo ? 15 : 18, gruby: false)).multilineTextAlignment(.center) }
             NowaNaklejka()
             Rzad {
                 Button(stan.t("nastepny")) { stan.nastepnyPoziom() }.buttonStyle(.kreska)
@@ -72,8 +103,6 @@ struct Brawo: View {
                 }
                 .buttonStyle(.kreska(Kolory.zielony, maly: true))
             }
-        }
-        .foregroundStyle(Kolory.tekst)
     }
 }
 
