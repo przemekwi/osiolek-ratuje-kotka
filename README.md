@@ -15,7 +15,7 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 | 3 | Tryb „Zaplanuj drogę z robotem” | do zrobienia |
 | 4 | Ekran startowy 1:1, szafa z koszulkami, menu, „O grze” | szafa i menu gotowe do sprawdzenia; brakuje „O grze” i przycisku trybu z robotem |
 | 5 | Album naklejek, koniec rozdziału co 5 poziomów | album gotowy do sprawdzenia; brakuje końca rozdziału |
-| 6 | Limit czasu i przerwa z pytaniem dla rodzica, zapis ostatniego punktu | do zrobienia |
+| 6 | Limit czasu i przerwa z pytaniem dla rodzica, zapis ostatniego punktu | gotowy do sprawdzenia |
 
 Poza zakresem (decyzja właściciela): gra „Osiołek rozsypał karty” (osobna gra), udostępnianie i linki do witryny,
 instalacja PWA, pełny ekran, zdjęcia rysunków.
@@ -56,7 +56,8 @@ OsiolekRatujeKotka/
   App/       OsiolekApp (wejście), StanGry (@Observable: ekrany, nakładki, ustawienia, pętla klatek CADisplayLink)
   Logika/    czysty Swift bez SwiftUI, przeniesiony 1:1 z gry (te same nazwy funkcji):
              Labirynt (budowa planszy, BFS, krzaczek), Rozgrywka (ruch, kotek, wygrana, trudność),
-             Podpowiedz (podpowiedź stopniowana), Album (naklejki), Losowanie
+             Podpowiedz (podpowiedź stopniowana), Album (naklejki), Limit (przerwa dla dziecka),
+             Zapis (stan między uruchomieniami), Losowanie
   Rysunki/   Pioro (płótno z API jak w HTML na GraphicsContext, krzywe przez punkty), Postacie, Plansza
   Widoki/    StartView, SzafaView (koszulki, paleta), GraView (pasek, plansza, strzałki), AlbumView (album, tacka),
              Nakladki (menu, „Brawo”), KlawiaturaSprzetowa, Styl (kolory, przyciski „kreska”)
@@ -76,6 +77,17 @@ narzedzia/      eksport danych i ikony z gry webowej
 - **Sterowanie**: przytrzymanie strzałki, palec na planszy (osiołek idzie w stronę palca), klawiatura sprzętowa
   na iPadzie (strzałki, W A S D, P/Esc — pauza), wibracja przy uderzeniu w ścianę i przy spotkaniu z kotkiem.
   Na niskim ekranie poziomo strzałki stoją obok planszy.
+
+## Zapis i przerwa dla dziecka
+
+Gra webowa niczego nie zapisuje. Aplikacja pamięta między uruchomieniami (plik `zapis.json` w Application Support,
+tylko na urządzeniu): bieżący labirynt z położeniem osiołka i kotka, poziom i trudność, album, koszulkę, ustawienia
+oraz stan limitu czasu. Zapis następuje przy starcie poziomu, po wygranej, co 5 s gry i przy zejściu aplikacji z ekranu.
+
+Limit czasu działa jak na stronie: po 15 minutach gry (plansza i szafa) pojawia się przerwa, a odblokowuje ją rodzic,
+wpisując cyframi liczbę zapisaną słowami. Licznik przetrwa zamknięcie aplikacji, więc ponowne uruchomienie nie omija
+przerwy. Prawdziwa przerwa, czyli co najmniej godzina od zatrzymania gry albo od zamknięcia aplikacji, przywraca pełne
+15 minut.
 
 ## Biblioteki i licencje
 

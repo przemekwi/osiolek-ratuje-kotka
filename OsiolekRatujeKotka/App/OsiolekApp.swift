@@ -9,12 +9,14 @@ struct OsiolekApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
+            ZStack {
                 switch stan.ekran {
                 case .start: StartView()
                 case .szafa: SzafaView()
                 case .gra: GraView()
                 }
+                // Przerwa zasłania wszystko, dopóki rodzic nie odblokuje gry.
+                if stan.przerwaTrwa { PrzerwaView() }
             }
             .environment(stan)
             .preferredColorScheme(stan.schematKolorow)
@@ -23,8 +25,10 @@ struct OsiolekApp: App {
             .statusBarHidden(stan.ekran == .gra)
             .onChange(of: faza) { _, f in
                 // Po zejściu do tła gra staje (nic nie dzieje się za plecami dziecka).
-                if f != .active && stan.ekran == .gra && stan.nakladka == nil { stan.pauza() }
-                if f == .active { Syntezator.wspolny.wznow() } else if f == .background { Syntezator.wspolny.wstrzymaj() }
+                if f != .active && stan.ekran == .gra && stan.nakladka == nil { stan.pauza(cicho: true) }
+                if f == .active { if !stan.przerwaTrwa { Syntezator.wspolny.wznow() } } else if f == .background { Syntezator.wspolny.wstrzymaj() }
+                // Zapis przy każdym zejściu z ekranu: po powrocie dziecko jest w tym samym miejscu labiryntu.
+                if f != .active { stan.zapisz() }
             }
         }
     }

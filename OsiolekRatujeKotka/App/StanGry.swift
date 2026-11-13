@@ -12,7 +12,7 @@ enum WyborMotywu: String, CaseIterable { case system, jasny, ciemny }
 final class StanGry {
     var ekran: Ekran = .start
     var nakladka: Nakladka?
-    var jezyk: String = Teksty.jezykUrzadzenia()
+    var jezyk: String = Teksty.jezykUrzadzenia() { didSet { if przerwaTrwa { odswiezPrzerwe() } } }
     var motyw: WyborMotywu = .system
     /// Wybrana koszulka (indeks rysunku) i kolor z palety; nil — kolor z rysunku.
     var koszulkaIndeks: Int?
@@ -20,6 +20,11 @@ final class StanGry {
     /// Koszulka, którą osiołek ma na sobie (`zalozona` z gry).
     var koszulka: Koszulka? { koszulkaIndeks.map { Koszulka(indeks: $0, kolor: kolorKoszulki) } }
     var album = AlbumNaklejek()
+    /// Limit czasu dla dziecka. Licznik zmienia się co klatkę, więc SwiftUI go nie obserwuje;
+    /// widoki czytają `przerwaTrwa` i `pytanieRodzica`, które zmieniają się tylko przy przerwie.
+    @ObservationIgnored private(set) var limit = Limit()
+    private(set) var przerwaTrwa = false
+    private(set) var pytanieRodzica = ""
 
     // Napisy paska, odświeżane przy zmianie.
     private(set) var poziom = 1
@@ -46,9 +51,92 @@ final class StanGry {
     /// Nowy poziom czeka na pierwszy pomiar ramki planszy (wielkość labiryntu zależy od miejsca na ekranie).
     @ObservationIgnored private var czekaNaRamke = false
     @ObservationIgnored private var zegar: ZegarGry?
+    /// Zapisany poziom czeka na „W drogę”: wtedy dziecko wraca do tego samego labiryntu i miejsca.
+    @ObservationIgnored private var zapisanaPlansza: StanPlanszy?
+    @ObservationIgnored private var odZapisu = 0.0
 
     init() {
         gra.naZdarzenie = { [weak self] z in self?.zdarzenie(z) }
+        wczytaj()
+    }
+
+    // MARK: Zapis (nowość względem gry webowej)
+    private static var plikZapisu: URL? {
+        guard let katalog = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                          appropriateFor: nil, create: true) else { return nil }
+        return katalog.appendingPathComponent("zapis.json")
+    }
+
+    /// Zapisuje ustawienia, album, koszulkę, limit czasu i bieżący labirynt (z położeniem osiołka i kotka).
+    func zapisz() {
+        var z = Zapis()
+        z.zapisano = Date().timeIntervalSince1970
+        z.jezyk = jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki
+        z.koszulkaIndeks = koszulkaIndeks; z.kolorKoszulki = kolorKoszulki
+        z.album = album; z.limit = limit
+        z.poziom = poziom; z.trudnosc = gra.lab.trudnosc; z.pomocZRzedu = gra.lab.pomocZRzedu
+        z.ostatniCharakter = gra.lab.ostatnia.charakter; z.ostatniRog = gra.lab.ostatnia.rog; z.ostatniZwodniczy = gra.lab.ostatnia.zwodniczy
+        z.plansza = gra.lab.G.isEmpty ? zapisanaPlansza : gra.migawka()
+        guard let plik = StanGry.plikZapisu, let dane = try? JSONEncoder().encode(z) else { return }
+        try? dane.write(to: plik, options: .atomic)
+        odZapisu = 0
+    }
+
+    private func wczytaj() {
+        guard let plik = StanGry.plikZapisu, let dane = try? Data(contentsOf: plik),
+              let z = try? JSONDecoder().decode(Zapis.self, from: dane) else { return }
+        if let j = z.jezyk, Teksty.jezyki.contains(j) { jezyk = j }
+        if let m = z.motyw, let w = WyborMotywu(rawValue: m) { motyw = w }
+        muzyka = z.muzyka; dzwieki = z.dzwieki
+        koszulkaIndeks = z.koszulkaIndeks.flatMap { Koszulka.wszystkie.indices.contains($0) ? $0 : nil }
+        kolorKoszulki = z.kolorKoszulki
+        album = z.album
+        var l = z.limit
+        l.poPowrocie(zapisano: z.zapisano, teraz: Date().timeIntervalSince1970)
+        limit = l
+        odswiezPrzerwe()
+        poziom = max(1, z.poziom)
+        gra.lab.trudnosc = max(1, z.trudnosc); gra.lab.pomocZRzedu = z.pomocZRzedu
+        gra.lab.ostatnia = (z.ostatniCharakter, z.ostatniRog, z.ostatniZwodniczy)
+        if let p = z.plansza {
+            // Poziom skończony przed zamknięciem: po powrocie od razu następny.
+            if p.faza == .koniec { poziom += 1 } else { zapisanaPlansza = p }
+        }
+    }
+
+    // MARK: Przerwa dla dziecka
+    private func przerwa() {
+        limit.przerwa(teraz: Date().timeIntervalSince1970, &gra.lab.los)
+        gra.puscWszystko()
+        gra.pauza = true
+        dzwiek.wstrzymaj()
+        odswiezPrzerwe()
+        zapisz()
+    }
+
+    /// Odpowiedź rodzica na pytanie o liczbę; przy błędzie nowe pytanie.
+    func odblokuj(_ tekst: String) -> Bool {
+        if limit.sprawdz(Int(tekst.trimmingCharacters(in: .whitespaces)), teraz: Date().timeIntervalSince1970) { klik(); return true }
+        limit.nowePytanie(&gra.lab.los)
+        odswiezPrzerwe()
+        return false
+    }
+
+    /// „Koniec grania, przerwa”: gra zostaje zablokowana z nowym pytaniem.
+    func koniecGrania() { klik(); limit.nowePytanie(&gra.lab.los); odswiezPrzerwe() }
+
+    func przedluz(_ minuty: Int) {
+        klik()
+        limit.przedluz(minuty)
+        odswiezPrzerwe()
+        dzwiek.wznow()
+        if ekran == .gra && nakladka == nil { gra.pauza = false }
+        zapisz()
+    }
+
+    private func odswiezPrzerwe() {
+        przerwaTrwa = limit.zablokowana
+        pytanieRodzica = t("rodzicPytanie", ["s": Limit.slownie(limit.liczba, jezyk)])
     }
 
     let dzwiek = Syntezator.wspolny
@@ -70,6 +158,7 @@ final class StanGry {
         dzwiek.nowaMelodia()
         odswiez()
         komunikat = t("start", ["n": poziom])
+        zapisz()
     }
 
     /// „Graj”: najpierw szafa, jak w grze.
@@ -77,6 +166,7 @@ final class StanGry {
         klik()
         dzwiek.wlaczMuzyke()
         ekran = .szafa
+        uruchomZegar()
     }
 
     /// „Przebierz osiołka” w menu: szafa, a potem powrót do tego samego labiryntu.
@@ -98,7 +188,14 @@ final class StanGry {
         dzwiek.wlaczMuzyke()
         gra.pauza = false
         ekran = .gra
-        if gra.lab.G.isEmpty || gra.faza == .koniec {
+        if gra.lab.G.isEmpty, let p = zapisanaPlansza {
+            // Powrót do zapisanego labiryntu w tym samym miejscu.
+            zapisanaPlansza = nil
+            gra.przywroc(p)
+            gra.poziom = poziom
+            dzwiek.nowaMelodia()
+            odswiez()
+        } else if gra.lab.G.isEmpty || gra.faza == .koniec {
             if ramka.width > 0 && ramka.height > 0 { zacznijPoziom() } else { czekaNaRamke = true }
         }
         uruchomZegar()
@@ -115,9 +212,9 @@ final class StanGry {
         zacznijPoziom()
     }
 
-    func pauza() {
+    func pauza(cicho: Bool = false) {
         guard ekran == .gra else { return }
-        klik()
+        if !cicho { klik() }
         if gra.faza == .koniec { nakladka = .brawo; return }
         gra.puscWszystko()
         gra.pauza = true
@@ -183,7 +280,11 @@ final class StanGry {
     func zatrzymajZegar() { zegar?.stop() }
 
     private func tik(_ dt: Double) {
-        guard ekran == .gra, !gra.lab.G.isEmpty else { return }
+        // Limit liczy czas na planszy i w szafie (jak `liczLimit` w grze).
+        if (ekran == .gra || ekran == .szafa) && !limit.zablokowana && limit.licz(min(0.05, dt)) { przerwa() }
+        odZapisu += dt
+        if odZapisu >= 5 { zapisz() }
+        guard ekran == .gra, !gra.lab.G.isEmpty, !limit.zablokowana else { return }
         gra.tik(min(0.05, dt))
         if brawoZa > 0 {
             brawoZa -= dt
@@ -224,6 +325,7 @@ final class StanGry {
         case .wygrana:
             dzwiek.brawo()
             album.dajNaklejke(&gra.lab.los)
+            zapisz()
             faza = gra.faza; spotkania += 1
             brawoZa = gra.ograniczonyRuch ? 0.2 : gra.lab.trybGry == .plan ? 1.4 : 0.9
         }
