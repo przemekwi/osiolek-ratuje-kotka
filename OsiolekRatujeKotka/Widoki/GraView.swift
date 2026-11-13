@@ -14,7 +14,7 @@ struct GraView: View {
                 if bok {
                     HStack(spacing: 8) {
                         PlanszaView(ciemny: schemat == .dark)
-                        Strzalki().frame(maxWidth: 320)
+                        Strzalki(kompakt: true).frame(maxWidth: 260)
                     }
                 } else {
                     PlanszaView(ciemny: schemat == .dark)
@@ -204,25 +204,27 @@ struct TloPlanszy: View, Equatable {
 /// Strzałki: osiołek idzie, dopóki dziecko trzyma przycisk.
 struct Strzalki: View {
     @Environment(StanGry.self) private var stan
+    /// Niski ekran poziomo: mniejsze przyciski (jak w grze), żeby plansza dostała więcej miejsca.
+    var kompakt = false
 
     var body: some View {
         VStack(spacing: 6) {
             Grid(horizontalSpacing: 6, verticalSpacing: 6) {
                 GridRow {
                     Color.clear.frame(width: 1, height: 1)
-                    PrzyciskStrzalki(kierunek: .gora, napis: stan.t("gora"))
+                    PrzyciskStrzalki(kierunek: .gora, napis: stan.t("gora"), kompakt: kompakt)
                     Color.clear.frame(width: 1, height: 1)
                 }
                 GridRow {
-                    PrzyciskStrzalki(kierunek: .lewo, napis: stan.t("lewo"))
-                    PrzyciskStrzalki(kierunek: .dol, napis: stan.t("dol"))
-                    PrzyciskStrzalki(kierunek: .prawo, napis: stan.t("prawo"))
+                    PrzyciskStrzalki(kierunek: .lewo, napis: stan.t("lewo"), kompakt: kompakt)
+                    PrzyciskStrzalki(kierunek: .dol, napis: stan.t("dol"), kompakt: kompakt)
+                    PrzyciskStrzalki(kierunek: .prawo, napis: stan.t("prawo"), kompakt: kompakt)
                 }
             }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(stan.t("strzalki"))
             Text(stan.t("sterDotyk"))
-                .font(.kreda(14, gruby: false))
+                .font(.kreda(kompakt ? 12 : 14, gruby: false))
                 .foregroundStyle(Kolory.ciche)
                 .multilineTextAlignment(.center)
         }
@@ -233,15 +235,16 @@ struct PrzyciskStrzalki: View {
     @Environment(StanGry.self) private var stan
     let kierunek: Kierunek
     let napis: String
+    var kompakt = false
     @State private var wcisniety = false
 
     var body: some View {
         VStack(spacing: 0) {
-            IkonaDziecka(id: "strzalka", kierunek: kierunek).frame(width: 28, height: 28)
-            Text(napis).font(.kreda(14))
+            IkonaDziecka(id: "strzalka", kierunek: kierunek).frame(width: kompakt ? 22 : 28, height: kompakt ? 22 : 28)
+            Text(napis).font(.kreda(kompakt ? 12 : 14))
         }
         .foregroundStyle(Kolory.napisPrzycisku)
-        .frame(width: 90, height: 62)
+        .frame(width: kompakt ? 74 : 90, height: kompakt ? 50 : 62)
         .kreska(Kolory.niebieski)
         .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 0 : 2, y: wcisniety ? 0 : 3))
         .offset(y: wcisniety ? 2 : 0)
