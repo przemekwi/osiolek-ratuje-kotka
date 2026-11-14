@@ -39,7 +39,9 @@ strzałki po lewej albo prawej stronie, przycisk „Oceń grę” w „Dla rodzi
 Zasada numeracji: nowy tryb albo przebudowa — całość (2.0), większa zmiana — o 0.1, mała zmiana — litera (1.1a).
 W App Store litera to trzecia liczba (1.1a → 1.1.1). Gra webowa na gry.wilde.pl ma ten sam numer.
 
-- **1.1** — na dalszych poziomach więcej krzaczków (od stopnia 5 jeden, od 9 dwa, od 13 trzy, nigdy więcej),
+- **1.1a** — gra webowa dostała „Nową grę” w menu pauzy (z ostrzeżeniem) i teksty z aplikacji; obie gry znów takie same.
+- **1.1** — „Nowa gra” w menu pauzy z ostrzeżeniem, naklejka na naklejce i większy album na telefonie,
+  polityka prywatności; na dalszych poziomach więcej krzaczków (od stopnia 5 jeden, od 9 dwa, od 13 trzy, nigdy więcej),
   serduszka zbiera się po kolei, każda plansza sprawdzana symulacją przejścia; poprawka limitu dziennego
   (dokończenie labiryntu najwyżej 2 minuty także po limicie dnia); numer wersji w „O grze”.
   Gra webowa wygląda i działa jak aplikacja (poza trybem „Zaplanuj drogę z robotem”, który jest tylko w przeglądarce).
