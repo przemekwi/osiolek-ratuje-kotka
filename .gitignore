@@ -60,3 +60,9 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Lokalne
+*.xcuserstate
+DerivedData/
+.swiftpm/
+.DS_Store
