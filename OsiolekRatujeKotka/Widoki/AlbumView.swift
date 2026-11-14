@@ -55,16 +55,19 @@ struct OknoAlbumu: View {
         Group {
             if poziomo {
                 // Telefon poziomo: album po lewej, tacka i przyciski po prawej (jak w grze).
+                // Album zajmuje całe miejsce poza kolumną tacki (280 pt): na iPhonie 13 poziomo ok. 380 pt zamiast 310.
                 Panel(maksSzerokosc: 920) {
                     HStack(alignment: .center, spacing: 16) {
-                        obrazAlbumu(szer: max(200, min((rozmiarEkranu.width - 120) / 2, (rozmiarEkranu.height - 60) * proporcja)))
+                        obrazAlbumu(szer: max(200, min(min(920, rozmiarEkranu.width - 32) - 40 - 16 - 280,
+                                                       (rozmiarEkranu.height - 60) * proporcja)))
                         VStack(spacing: 6) { tytul(20); reszta(album) }.frame(maxWidth: .infinity)
                     }
                 }
             } else {
-                Panel {
+                // Telefon pionowo: węższe marginesy panelu, żeby album był jak najszerszy (iPhone 13: 342 pt zamiast 318).
+                Panel(odstepPoziomy: 8) {
                     tytul(28)
-                    obrazAlbumu(szer: max(240, min(560, rozmiarEkranu.width - 72, max(240, rozmiarEkranu.height - 440) * proporcja)))
+                    obrazAlbumu(szer: max(240, min(560, rozmiarEkranu.width - 48, max(240, rozmiarEkranu.height - 440) * proporcja)))
                     reszta(album)
                 }
             }
@@ -140,14 +143,20 @@ struct OknoAlbumu: View {
 
     private var gestAlbumu: some Gesture {
         DragGesture(minimumDistance: 0)
+            // Stuknięcie przykleja wybraną naklejkę (także na inną), a przesuwanie zaczyna się dopiero po ruchu palca:
+            // inaczej stuknięcie w zajęte miejsce chwytało leżącą naklejkę i nowej nie dało się przykleić.
             .onChanged { v in
                 let (x, y) = wAlbumie(v.location, ramkaAlbumu.size)
                 if let p = przesuwana {
                     stan.album.przesun(p.id, x + p.dx, y + p.dy)
-                } else if v.translation == .zero, let id = stan.album.naklejkaPod(x, y),
-                          let n = stan.album.naklejki.first(where: { $0.id == id }), let nx = n.x, let ny = n.y {
-                    stan.album.naWierzch(id)
-                    przesuwana = (id, nx - x, ny - y)
+                } else if hypot(v.translation.width, v.translation.height) > 8 {
+                    let (sx, sy) = wAlbumie(v.startLocation, ramkaAlbumu.size)
+                    if let id = stan.album.naklejkaPod(sx, sy),
+                       let n = stan.album.naklejki.first(where: { $0.id == id }), let nx = n.x, let ny = n.y {
+                        stan.album.naWierzch(id)
+                        przesuwana = (id, nx - sx, ny - sy)
+                        stan.album.przesun(id, x + nx - sx, y + ny - sy)
+                    }
                 }
             }
             .onEnded { v in

@@ -24,7 +24,7 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
 - Poza zakresem: gra w karty „Osiołek rozsypał karty” (osobna gra), udostępnianie, PWA, wyzwania z linku,
   plansza „Widzisz krótszą drogę?” po wygranej (usunięta).
 - Menu: dla dziecka start (Graj, Album, Przebierz osiołka, Dźwięk) i menu pauzy (Graj dalej, Przebierz,
-  Album, Strzałki, Dźwięk, Wyjdź); pasek gry: Podpowiedź i Menu. Ustawienia w „Dla rodzica”:
+  Album, Strzałki, Dźwięk, Nowa gra z ostrzeżeniem bez bramki, Wyjdź); pasek gry: Podpowiedź i Menu. Ustawienia w „Dla rodzica”:
   „O grze” bez bramki; za bramką limity, wibracje, Dostęp z przewodnikiem, tryb dla dorosłych
   i rozwijane „Ustawienia gry” (muzyka, dźwięki, kolory, język, nowa gra z potwierdzeniem).
 - Bramka rodzica: mnożenie z tabliczki (6–9 × 6–9) wpisywane na klawiaturze cyfr w grze, bez podpowiedzi.
@@ -47,8 +47,8 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
    test na iPhonie i z córką; poprawki zgłaszane zrzutami.
 2. Scalenie PR #1 do `main` (decyzja właściciela).
 3. Formalności: konto Apple Developer (opłata), konsultacja statusu przedsiębiorcy w UE (DSA) z księgową,
-   publikacja polityki prywatności (tekst: `AppStore/polityka-prywatnosci.md`; według zasad witryn WILDE
-   wspólna polityka mieszka na przemyslaw.wilde.pl — repo `przemyslaw.wilde`, osobna decyzja właściciela).
+   polityka prywatności: źródło `AppStore/polityka-prywatnosci.md`, kopia na przemyslaw.wilde.pl
+   (`/polityka-prywatnosci/osiolek-ratuje-kotka/`, repo `przemyslaw.wilde`); zmiana tekstu w obu miejscach.
 4. Materiały: zrzuty (iPhone 17 Pro Max, iPad Pro 13″; lista w `AppStore/zrzuty.md`), opis i formularze
    z `AppStore/` (klasyfikacja 4+, Dla dzieci 6–8 lat, „Brak gromadzenia danych”).
 5. Wysyłka: App Store Connect → nowa aplikacja → Xcode Archive → TestFlight (rodzina) → przegląd.
