@@ -29,10 +29,21 @@ instalacja PWA, pełny ekran, zdjęcia rysunków.
 - [x] Uporządkowanie menu: dla dziecka start (Graj, Album, Przebierz, Dźwięk) i menu pauzy, ustawienia w „Dla rodzica”.
 - [ ] Zrzuty ekranu, polityka prywatności na witrynie, konto Apple Developer, TestFlight (właściciel).
 
-**Później (1.1 i dalej):** tryb „Zaplanuj drogę z robotem”, kontroler do gier, widżet na ekran główny,
+**Później (1.2 i dalej):** tryb „Zaplanuj drogę z robotem”, kontroler do gier, widżet na ekran główny,
 strzałki po lewej albo prawej stronie, przycisk „Oceń grę” w „Dla rodzica” (za bramką, po wydaniu).
 
 **Świadomie bez:** powiadomień, rankingów i Game Center, reklam, zakupów, analityki, aparatu, mikrofonu, lokalizacji.
+
+## Historia wersji
+
+Zasada numeracji: nowy tryb albo przebudowa — całość (2.0), większa zmiana — o 0.1, mała zmiana — litera (1.1a).
+W App Store litera to trzecia liczba (1.1a → 1.1.1). Gra webowa na gry.wilde.pl ma ten sam numer.
+
+- **1.1** — na dalszych poziomach więcej krzaczków (od stopnia 5 jeden, od 9 dwa, od 13 trzy, nigdy więcej),
+  serduszka zbiera się po kolei, każda plansza sprawdzana symulacją przejścia; poprawka limitu dziennego
+  (dokończenie labiryntu najwyżej 2 minuty także po limicie dnia); numer wersji w „O grze”.
+  Gra webowa wygląda i działa jak aplikacja (poza trybem „Zaplanuj drogę z robotem”, który jest tylko w przeglądarce).
+- **1.0** — pierwsza pełna wersja (przed wydaniem).
 
 ## Uruchomienie w Xcode
 

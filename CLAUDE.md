@@ -20,6 +20,13 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
 - Środowisko chmurowe nie ma Xcode ani symulatora: kodu Swift nie da się tu zbudować. Po każdej zmianie
   właściciel buduje w Xcode (Integrate → Pull, ⌘R, ⌘U) i przysyła zrzuty błędów albo ekranów.
 
+## Wersje
+- Każda zmiana podnosi wersję (`App/Wersja.swift`, ten sam numer w grze webowej: `WERSJA` w `osiolek.html`):
+  nowy tryb albo przebudowa → całość (2.0), większa zmiana → o 0.1 (1.2), mała zmiana → litera (1.1a, 1.1b…).
+- App Store przyjmuje tylko cyfry: `MARKETING_VERSION` = numer z literą jako trzecią liczbą (1.1a → 1.1.1);
+  `CURRENT_PROJECT_VERSION` (kompilacja) rośnie o 1 przy każdej zmianie wersji.
+- Każdą wersję dopisujemy do „Historii wersji” w `README.md`.
+
 ## Kluczowe decyzje
 - Poza zakresem: gra w karty „Osiołek rozsypał karty” (osobna gra), udostępnianie, PWA, wyzwania z linku,
   plansza „Widzisz krótszą drogę?” po wygranej (usunięta).

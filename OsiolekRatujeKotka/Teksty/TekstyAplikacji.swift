@@ -4,6 +4,10 @@ import Foundation
 /// Polski jest źródłowy; pozostałe języki to tłumaczenia w słownictwie gry (osiołek, kotek, przerwa).
 enum TekstyAplikacji {
     static let teksty: [String: [String: String]] = [
+        "wersja": [
+            "pl": "Wersja {w}", "en": "Version {w}", "fr": "Version {w}", "es": "Versión {w}",
+            "de": "Version {w}", "it": "Versione {w}", "zh-Hans": "版本 {w}", "zh-Hant": "版本 {w}",
+        ],
         "rodzicMnozenie": [
             "pl": "Dla rodzica: wpisz wynik mnożenia.",
             "en": "For parents: type the answer to this multiplication.",
