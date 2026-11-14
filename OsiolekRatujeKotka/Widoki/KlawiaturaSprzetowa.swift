@@ -4,6 +4,9 @@ import UIKit
 enum Klawisz: Equatable {
     case kierunek(Kierunek)
     case pauza
+    /// Tryb z robotem: Enter — „Idź”, Backspace — „Cofnij ruch”.
+    case idz
+    case cofnij
 }
 
 /// Klawisze z klawiatury sprzętowej przez zdarzenia UIKit (`pressesBegan`/`pressesEnded`).
@@ -41,6 +44,8 @@ struct KlawiaturaSprzetowa: UIViewRepresentable {
             case .keyboardDownArrow, .keyboardS: return .kierunek(.dol)
             case .keyboardUpArrow, .keyboardW: return .kierunek(.gora)
             case .keyboardEscape, .keyboardP: return .pauza
+            case .keyboardReturnOrEnter, .keypadEnter: return .idz
+            case .keyboardDeleteOrBackspace: return .cofnij
             default: return nil
             }
         }

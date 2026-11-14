@@ -43,6 +43,7 @@ let DOMEK_RAMKA = RYS["DOMEK_RAMKA"].liczby
 let LAPKA_RAMKA = RYS["LAPKA"]["ramka"].liczby
 let KRZAK_RAMKA = RYS["KRZAK"]["ramka"].liczby
 let SERCE_RAMKA = RYS["SERCE"]["ramka"].liczby
+let ROBOT_RAMKA = RYS["ROBOT"]["ramka"].liczby
 
 func osiolekKodem(_ c: Plotno, _ s: Double, _ koszulka: Koszulka?) {
     let O = RYS["OSIOLEK"]

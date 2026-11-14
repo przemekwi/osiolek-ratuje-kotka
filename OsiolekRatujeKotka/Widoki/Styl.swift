@@ -70,6 +70,8 @@ struct PrzyciskKreska: ButtonStyle {
     var maly = false
     /// Własne wypełnienie zamiast koloru (np. pasek odliczania podpowiedzi).
     var wypelnienie: AnyShapeStyle?
+    /// Mniejsze marginesy (przyciski planu robota obok planszy na telefonie poziomo).
+    var ciasny = false
 
     func makeBody(configuration: Configuration) -> some View {
         let wcisniety = configuration.isPressed
@@ -80,9 +82,9 @@ struct PrzyciskKreska: ButtonStyle {
             .foregroundStyle(kolor == Kolory.karta ? Kolory.tekst : Kolory.napisPrzycisku)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, maly ? 14 : 24)
-            .padding(.vertical, maly ? 6 : 10)
-            .frame(minHeight: maly ? 46 : 56)
+            .padding(.horizontal, ciasny ? 8 : maly ? 14 : 24)
+            .padding(.vertical, ciasny ? 2 : maly ? 6 : 10)
+            .frame(minHeight: ciasny ? 44 : maly ? 46 : 56)
             .kreska(wypelnienie ?? AnyShapeStyle(kolor))
             .background(KsztaltKreski().fill(Kolory.cien).offset(x: wcisniety ? 1 : 3, y: wcisniety ? 1 : 4))
             .offset(x: wcisniety ? 2 : 0, y: wcisniety ? 3 : 0)

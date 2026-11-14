@@ -52,6 +52,12 @@ final class StanGry {
     private(set) var podpGotowa = 0
     /// Tempo odświeżania planszy (zmienia się rzadko, przy starcie i końcu ruchu).
     private(set) var tempo: Tempo = .wolno
+    /// Tryb gry widoczny dla widoków (`gra.lab.trybGry` nie jest obserwowany).
+    private(set) var trybGry: TrybGry = .zwykly
+    /// Komunikat robota w dymku i licznik zmian planu (plansza rysuje łapki planu od nowa także w spoczynku).
+    private(set) var robotMowi = KomunikatRobota(k: "robotStart")
+    private(set) var wersjaPlanu = 0
+    var trybPlan: Bool { trybGry == .plan }
     var muzyka = true { didSet { Syntezator.wspolny.muzyka = muzyka; if muzyka && ekran == .gra { Syntezator.wspolny.wlaczMuzyke() } } }
     var dzwieki = true { didSet { Syntezator.wspolny.dzwieki = dzwieki } }
     /// Wibracje włączone (wyłącznik w „Dla rodzica”).
@@ -105,6 +111,7 @@ final class StanGry {
         z.album = album; z.limit = limit
         z.poziom = poziom; z.trudnosc = gra.lab.trudnosc; z.pomocZRzedu = gra.lab.pomocZRzedu
         z.ostatniCharakter = gra.lab.ostatnia.charakter; z.ostatniRog = gra.lab.ostatnia.rog; z.ostatniZwodniczy = gra.lab.ostatnia.zwodniczy
+        z.trybGry = gra.lab.trybGry
         z.plansza = gra.lab.G.isEmpty ? zapisanaPlansza : gra.migawka()
         guard let plik = StanGry.plikZapisu, let dane = try? JSONEncoder().encode(z) else { return }
         try? dane.write(to: plik, options: .atomic)
@@ -127,6 +134,8 @@ final class StanGry {
         poziom = max(1, z.poziom)
         gra.lab.trudnosc = max(1, z.trudnosc); gra.lab.pomocZRzedu = z.pomocZRzedu
         gra.lab.ostatnia = (z.ostatniCharakter, z.ostatniRog, z.ostatniZwodniczy)
+        gra.lab.trybGry = z.trybGry ?? z.plansza?.trybGry ?? .zwykly
+        trybGry = gra.lab.trybGry
         if let p = z.plansza {
             // Poziom skończony przed zamknięciem: po powrocie od razu następny.
             if p.faza == .koniec { poziom += 1 } else { zapisanaPlansza = p }
@@ -256,16 +265,31 @@ final class StanGry {
         zapisz()
     }
 
-    /// „Graj”: najpierw szafa, jak w grze.
-    /// „Graj”: od razu do labiryntu (zapisanego albo nowego). Szafa ma osobny przycisk.
-    func graj() {
+    /// „Graj” i „Zaplanuj drogę z robotem”: od razu do labiryntu (zapisanego albo nowego). Szafa ma osobny przycisk.
+    func graj(_ tryb: TrybGry = .zwykly) {
         dzwiek.przygotuj()
+        ustawTrybGry(tryb)
         wDroge()
     }
 
-    /// „Przebierz osiołka” na ekranie startowym: szafa, a „W drogę” prowadzi do gry.
+    /// Zmiana trybu (`ustawTrybGry` z gry): gra zaczyna się od pierwszego poziomu i najłatwiejszego labiryntu.
+    /// Album zostaje.
+    func ustawTrybGry(_ tg: TrybGry) {
+        guard tg != gra.lab.trybGry else { return }
+        gra.lab.trybGry = tg
+        trybGry = tg
+        poziom = 1
+        gra.lab.trudnosc = 1
+        gra.lab.pomocZRzedu = 0
+        gra.lab.G = []
+        zapisanaPlansza = nil
+        zapisz()
+    }
+
+    /// „Przebierz osiołka” na ekranie startowym: szafa, a „W drogę” prowadzi do gry (w trybie zwykłym, jak w grze).
     func szafa() {
         dzwiek.przygotuj()
+        ustawTrybGry(.zwykly)
         klik()
         dzwiek.wlaczMuzyke()
         ekran = .szafa
@@ -305,6 +329,7 @@ final class StanGry {
             // Powrót do zapisanego labiryntu w tym samym miejscu.
             zapisanaPlansza = nil
             gra.przywroc(p)
+            trybGry = gra.lab.trybGry
             if gra.zlyKsztalt(szer: ramka.width, wys: ramka.height) { gra.transponuj() }
             gra.poziom = poziom
             dzwiek.nowaMelodia()
@@ -393,6 +418,29 @@ final class StanGry {
         }
     }
 
+    // MARK: Tryb „Zaplanuj drogę z robotem”
+    /// Strzałka, klawisz albo stuknięcie w planszę dokłada ruch do planu.
+    func dodajKrok(_ k: Int) {
+        guard nakladka == nil else { return }
+        if gra.dodajKrok(k) { dzwiek.krok() }
+    }
+    func cofnijKrok() { guard nakladka == nil else { return }; if gra.cofnijKrok() { klik() } }
+    func wyczyscPlan() { guard nakladka == nil else { return }; if gra.wyczyscPlan() { klik() } }
+    func idzPlan() { guard nakladka == nil else { return }; if gra.idzPlan() { klik() } }
+
+    /// Palec na planszy w trybie planu: rysowanie drogi (dźwięk jak przy strzałce albo cofnięciu).
+    func prowadzPalcem(_ c: Int) -> Bool {
+        guard nakladka == nil, let dodany = gra.prowadzPalcem(c) else { return false }
+        if dodany { dzwiek.krok() } else { klik() }
+        return true
+    }
+    func krokPalcem(x: Double, y: Double) {
+        guard nakladka == nil else { return }
+        if gra.krokPalcem(x: x, y: y) { dzwiek.krok() }
+    }
+
+    var napisRobota: String { t(robotMowi.k, ["n": robotMowi.n ?? 0]) }
+
     private func odswiezPodp() {
         let za = gra.podpZostalo
         if za != podpZa {
@@ -477,6 +525,13 @@ final class StanGry {
             dzwiek.bum()
             if krzak { komunikat = t("krzakZamkniety") }
         case .krokRuchu: dzwiek.krokRuchu()
+        case .robot:
+            wersjaPlanu += 1
+            if gra.robotMowi != robotMowi { robotMowi = gra.robotMowi }
+            // Dymek robota jak `aria-live="polite"` w grze: VoiceOver czyta każdy komunikat.
+            if UIAccessibility.isVoiceOverRunning {
+                UIAccessibility.post(notification: .announcement, argument: napisRobota)
+            }
         case .radosc: dzwiek.radosc()
         case .serce:
             zebrania += 1
@@ -514,7 +569,7 @@ final class StanGry {
         // `opisPodp` z gry: bez podpowiedzi, z małą pomocą (najwyżej stopień 2) albo liczba podpowiedzi.
         let opis = gra.podpowiedzi == 0 ? t("bezPodp")
             : gra.podpMaks < 3 && gra.lab.trybGry != .plan ? t("malaPomoc") : t("podpN", ["n": gra.podpowiedzi])
-        return s + opis
+        return s + opis + (gra.lab.trybGry == .plan ? " " + t("planyN", ["n": gra.plan.ile]) : "")
     }
 }
 

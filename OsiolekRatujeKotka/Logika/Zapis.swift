@@ -26,6 +26,9 @@ struct StanPlanszy: Codable, Equatable {
     var podpMaks: Int
     var czas: Double
     var start: Bool
+    /// Tryb z robotem: plan ułożony, ale jeszcze niewykonany, i liczba naciśnięć „Idź” (opcjonalne: starsze zapisy).
+    var planKroki: [KrokPlanu]?
+    var planyIle: Int?
 }
 
 /// Wszystko, co aplikacja pamięta między uruchomieniami (plik zapis.json w Application Support).
@@ -54,6 +57,8 @@ struct Zapis: Codable, Equatable {
     var ostatniCharakter = ""
     var ostatniRog = -1
     var ostatniZwodniczy = false
+    /// Tryb gry (zwykły albo z robotem); opcjonalne: starszy zapis to zawsze tryb zwykły.
+    var trybGry: TrybGry?
     var plansza: StanPlanszy?
 }
 
@@ -69,7 +74,8 @@ extension Rozgrywka {
                            przeszkoda: nil, przeszkody: lab.przeszkody.map { Przeszkoda(pole: $0.pole, klucz: $0.klucz, otwarta: $0.otwarta, znika: 0) },
                            trybGry: lab.trybGry, faza: faza, osiol: doCelu(osiol), kot: doCelu(kot), serca: serca, sercaN: sercaN,
                            zebrane: zebrane, przedmiot: przedmiot, trasa: trasa, trasaKot: trasaKot, slady: slady,
-                           podpowiedzi: podpowiedzi, podpMaks: podp.maks, czas: czas, start: start)
+                           podpowiedzi: podpowiedzi, podpMaks: podp.maks, czas: czas, start: start,
+                           planKroki: plan.wyk < 0 && !plan.kroki.isEmpty ? plan.kroki : nil, planyIle: plan.ile)
     }
 
     /// Odtwarza zapisany poziom w tym samym miejscu, w którym dziecko skończyło.
@@ -87,5 +93,17 @@ extension Rozgrywka {
         geo = nil
         podpStart()
         podp.maks = s.podpMaks
+        // Plan w trakcie wykonania nie jest zapisywany: osiołek stoi tam, dokąd szedł, a dziecko układa dalej.
+        planOdNowa()
+        plan.ile = s.planyIle ?? 0
+        if let k = s.planKroki, !k.isEmpty, lab.trybGry == .plan {
+            plan.kroki = k
+            plan.koniec = k[k.count - 1].pole
+        }
+        if lab.trybGry == .plan {
+            if plan.kroki.isEmpty { mowRobot("robotStart") }
+            else if plan.koniec == lab.kotekI { mowRobot("robotGotowe") }
+            else { mowRobot("robotKroki", plan.kroki.count) }
+        }
     }
 }

@@ -25,6 +25,8 @@ enum Zdarzenie: Equatable {
     case krzakZnika
     case kotekZnaleziony
     case wygrana
+    /// Robot mówi coś nowego (tryb „Zaplanuj drogę z robotem”).
+    case robot
 }
 
 
@@ -59,6 +61,9 @@ final class Rozgrywka {
     /// Najwyższy stopień podpowiedzi użyty na poziomie.
     var podpMaks: Int { podp.maks }
     var ograniczonyRuch = false
+    /// Tryb „Zaplanuj drogę z robotem” (Plan.swift): ułożony plan i komunikat robota.
+    var plan = StanPlanu()
+    var robotMowi = KomunikatRobota(k: "robotStart")
 
     /// Trzymane strzałki: klawisz, przycisk albo palec. Liczy się ostatnio wciśnięta.
     private(set) var trzymane: [(zrodlo: String, kier: Int?)] = []
@@ -94,7 +99,9 @@ final class Rozgrywka {
         let krzak = !lab.przeszkody.isEmpty
         przedmiot = lab.los.pick(Przedmiot.allCases.filter { $0 != przedmiot && !($0 == .serce && krzak) })
         geo = nil
+        planOdNowa(); plan.ile = 0
         podpStart()
+        if lab.trybGry == .plan { mowRobot("robotStart") }
     }
 
     func losujSerca() -> [Int] {
@@ -145,6 +152,7 @@ final class Rozgrywka {
 
     func krok() {
         guard wGrze else { return }
+        if lab.trybGry == .plan { krokPlanu(); return }
         if let k = kierunek() { idz(k) }
     }
 
@@ -244,15 +252,15 @@ final class Rozgrywka {
     }
 
     /// Po poziomie z dużą pomocą trudność stoi; dwa takie z rzędu — spada o stopień; inaczej rośnie.
-    func nastepnaTrudnosc(planyIle: Int = 0) -> Int {
-        let trudno = podpMaks >= 3 || bladzi() || (lab.trybGry == .plan && (planyIle >= 4 || podpowiedzi >= 2))
+    func nastepnaTrudnosc() -> Int {
+        let trudno = podpMaks >= 3 || bladzi() || (lab.trybGry == .plan && (plan.ile >= 4 || podpowiedzi >= 2))
         lab.pomocZRzedu = trudno ? lab.pomocZRzedu + 1 : 0
         if lab.pomocZRzedu >= 2 { lab.pomocZRzedu = 0; return max(1, lab.trudnosc - 1) }
         return lab.trudnosc + (trudno ? 0 : 1)
     }
 
-    func wygrana(planyIle: Int = 0) {
-        lab.trudnosc = nastepnaTrudnosc(planyIle: planyIle)
+    func wygrana() {
+        lab.trudnosc = nastepnaTrudnosc()
         faza = .koniec
         trzymane.removeAll()
         droga = nil
@@ -289,6 +297,11 @@ extension Rozgrywka {
         slady = slady.map { Slad(i: t($0.i), k: $0.k) }
         // Kąt łapki po odbiciu: atan2 z zamienionymi osiami.
         droga = droga?.map { LapkaPodp(i: t($0.i), kat: 3 * .pi / 2 - $0.kat) }
+        // Kierunki planu: prawo ↔ dół, lewo ↔ góra.
+        let K2 = [2, 3, 0, 1]
+        plan.kroki = plan.kroki.map { KrokPlanu(k: K2[$0.k], pola: $0.pola.map(t), pole: t($0.pole), sciana: $0.sciana) }
+        plan.koniec = t(plan.koniec)
+        oparty = nil
         podp.cel = -1
         geo = nil
         lab.wersja += 1
