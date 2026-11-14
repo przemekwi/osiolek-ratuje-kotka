@@ -42,6 +42,8 @@ struct ObrazNaklejki: View {
 struct OknoAlbumu: View {
     @Environment(StanGry.self) private var stan
     let rozmiarEkranu: CGSize
+    /// Zamknięcie poza grą (album otwarty z ekranu startowego).
+    var zamknij: (() -> Void)? = nil
     @State private var ramkaAlbumu: CGRect = .zero
     @State private var ciagnieta: (id: String, punkt: CGPoint)?
     @State private var przesuwana: (id: String, dx: Double, dy: Double)?
@@ -114,7 +116,10 @@ struct OknoAlbumu: View {
                  + (album.pelne > 0 ? stan.t("albumPelne", ["n": album.pelne]) : ""))
                 .font(.kreda(18)).foregroundStyle(Kolory.tekst).multilineTextAlignment(.center)
             Text(stan.t("albumWskazowka")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
-            Button(stan.t("wroc")) { stan.zamknijAlbum() }.buttonStyle(.kreska)
+            Button(stan.t("wroc")) {
+                if let z = zamknij { stan.klik(); z() } else { stan.zamknijAlbum() }
+            }
+            .buttonStyle(.kreska)
     }
 
     private func nazwa(_ id: String) -> String { Teksty.surowy(stan.jezyk, "nazwy")[id].napis }

@@ -166,6 +166,8 @@ struct OknoRodzica: View {
     @Environment(StanGry.self) private var stan
     let zamknij: () -> Void
     @State private var otwarta = false
+    @State private var oGrze = false
+    @State private var potwierdzNowa = false
 
     var body: some View {
         ZStack {
@@ -173,7 +175,12 @@ struct OknoRodzica: View {
             ScrollView {
                 Panel {
                     Text(stan.t("dlaRodzica")).font(.kreda(28)).foregroundStyle(Kolory.tekst).accessibilityAddTraits(.isHeader)
-                    if otwarta { UstawieniaLimitu() } else { BramkaRodzica { otwarta = true } }
+                    if otwarta {
+                        UstawieniaLimitu()
+                        ustawieniaGry
+                    } else {
+                        BramkaRodzica { otwarta = true }
+                    }
                     Button(stan.t("wroc")) { stan.klik(); zamknij() }.buttonStyle(.kreska)
                 }
                 .foregroundStyle(Kolory.tekst)
@@ -182,6 +189,33 @@ struct OknoRodzica: View {
             .scrollBounceBehavior(.basedOnSize)
             .defaultScrollAnchor(.center)
         }
+        .overlay { if oGrze { OGrzeView { oGrze = false } } }
         .onAppear { stan.nowaBramka() }
+    }
+
+    /// Ustawienia gry w jednym miejscu: dźwięk, kolory, język, „O grze” i nowa gra (kasuje postęp i album).
+    private var ustawieniaGry: some View {
+        VStack(spacing: 10) {
+            Text(stan.t("ustawieniaGry")).font(.kreda(20))
+            PrzelacznikiDzwieku()
+            Rzad {
+                PrzelacznikMotywu()
+                WyborJezyka()
+            }
+            Button(stan.t("oGrze")) { stan.klik(); oGrze = true }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
+            if potwierdzNowa {
+                Text(stan.t("nowaGraPotwierdz")).font(.kreda(15, gruby: false)).multilineTextAlignment(.center)
+                Rzad {
+                    Button(stan.t("nowaGraTak")) { stan.nowaGra(); potwierdzNowa = false; stan.klik() }
+                        .buttonStyle(.kreska(Kolory.zielony, maly: true))
+                    Button(stan.t("wroc")) { stan.klik(); potwierdzNowa = false }.buttonStyle(.kreska(Kolory.karta, maly: true))
+                }
+            } else {
+                Button(stan.t("nowaGra")) { stan.klik(); potwierdzNowa = true }.buttonStyle(.kreska(Kolory.zielony, maly: true))
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .kreska(Color.clear)
     }
 }

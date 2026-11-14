@@ -242,12 +242,29 @@ final class StanGry {
     }
 
     /// „Graj”: najpierw szafa, jak w grze.
+    /// „Graj”: od razu do labiryntu (zapisanego albo nowego). Szafa ma osobny przycisk.
     func graj() {
+        dzwiek.przygotuj()
+        wDroge()
+    }
+
+    /// „Przebierz osiołka” na ekranie startowym: szafa, a „W drogę” prowadzi do gry.
+    func szafa() {
         dzwiek.przygotuj()
         klik()
         dzwiek.wlaczMuzyke()
         ekran = .szafa
         uruchomZegar()
+    }
+
+    /// Dźwięk dla dziecka: jeden przełącznik wycisza naraz muzykę i dźwięki (osobno ustawia je rodzic).
+    var dzwiekWlaczony: Bool { muzyka || dzwieki }
+    func przelaczDzwiek() {
+        let wlacz = !dzwiekWlaczony
+        dzwieki = wlacz
+        muzyka = wlacz
+        if wlacz { klik() }
+        zapisz()
     }
 
     /// „Przebierz osiołka” w menu: szafa, a potem powrót do tego samego labiryntu.
@@ -377,7 +394,14 @@ final class StanGry {
         gra.lab.pomocZRzedu = 0
         // Nowa gra to także nowy, pusty album (na stronie album znika dopiero po zamknięciu karty).
         album = AlbumNaklejek()
-        zacznijPoziom()
+        if ekran == .gra {
+            zacznijPoziom()
+        } else {
+            // Z ustawień rodzica na ekranie startowym: nowy labirynt powstanie po „Graj”.
+            gra.lab.G = []
+            zapisanaPlansza = nil
+            zapisz()
+        }
     }
 
     func doStartu() {

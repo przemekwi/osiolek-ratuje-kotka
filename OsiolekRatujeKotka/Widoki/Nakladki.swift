@@ -33,49 +33,42 @@ struct NakladkiGry: View {
     }
 }
 
+/// Menu pauzy dla dziecka: tylko to, co dotyczy gry. Ustawienia są w „Dla rodzica” na ekranie startowym.
 struct MenuPauzy: View {
     @Environment(StanGry.self) private var stan
     let rozmiarEkranu: CGSize
 
     var body: some View {
         if rozmiarEkranu.width > rozmiarEkranu.height && rozmiarEkranu.height <= 700 {
-            // Telefon poziomo: przyciski parami w dwóch kolumnach, „Graj dalej” na całą szerokość (jak `#menu` w grze).
+            // Telefon poziomo: przyciski parami, „Graj dalej” i „Wyjdź” na całą szerokość.
             Panel(maksSzerokosc: 760) {
                 Text(stan.t("pauza")).font(.kreda(20)).foregroundStyle(Kolory.tekst)
                 Grid(horizontalSpacing: 12, verticalSpacing: 6) {
-                    GridRow {
-                        Button { stan.wznow() } label: { Text(stan.t("grajDalej")).frame(maxWidth: .infinity) }
-                            .buttonStyle(.kreska(Kolory.zolty, maly: true))
-                            .gridCellColumns(2)
-                    }
-                    GridRow {
-                        Button { stan.nowaGra() } label: { Text(stan.t("nowaGra")).frame(maxWidth: .infinity) }
-                            .buttonStyle(.kreska(Kolory.zielony, maly: true))
-                        przebierz
-                    }
-                    GridRow {
-                        PrzyciskMuzyki()
-                        PrzyciskDzwiekow()
-                    }
-                    GridRow {
-                        PrzelacznikMotywu()
-                        WyborJezyka()
-                    }
-                    GridRow {
-                        Button { stan.klik(); stan.nakladka = .oGrze } label: { Text(stan.t("oGrze")).frame(maxWidth: .infinity) }
-                            .buttonStyle(.kreska(Kolory.rozowy, maly: true))
-                            .gridCellColumns(2)
-                    }
-                    GridRow {
-                        Button { stan.doStartu() } label: { Text(stan.t("wyjdz")).frame(maxWidth: .infinity) }
-                            .buttonStyle(.kreska(Kolory.zielony, maly: true))
-                            .gridCellColumns(2)
-                    }
+                    GridRow { grajDalej(maly: true).gridCellColumns(2) }
+                    GridRow { przebierz; album }
+                    GridRow { strzalki; PrzyciskDzwieku(pelnaSzerokosc: true) }
+                    GridRow { wyjdz.gridCellColumns(2) }
                 }
             }
         } else {
-            menuPionowe
+            Panel {
+                Text(stan.t("pauza")).font(.kreda(30)).foregroundStyle(Kolory.tekst)
+                VStack(spacing: 12) {
+                    grajDalej(maly: false)
+                    przebierz
+                    album
+                    strzalki
+                    PrzyciskDzwieku(pelnaSzerokosc: true)
+                    wyjdz
+                }
+                .frame(maxWidth: 420)
+            }
         }
+    }
+
+    private func grajDalej(maly: Bool) -> some View {
+        Button { stan.wznow() } label: { Text(stan.t("grajDalej")).frame(maxWidth: .infinity) }
+            .buttonStyle(.kreska(Kolory.zolty, maly: maly))
     }
 
     private var przebierz: some View {
@@ -85,24 +78,41 @@ struct MenuPauzy: View {
         .buttonStyle(.kreska(Kolory.rozowy, maly: true))
     }
 
-    private var menuPionowe: some View {
-        Panel {
-            Text(stan.t("pauza")).font(.kreda(30)).foregroundStyle(Kolory.tekst)
-            VStack(spacing: 12) {
-                Button(stan.t("grajDalej")) { stan.wznow() }.buttonStyle(.kreska)
-                Button(stan.t("nowaGra")) { stan.nowaGra() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
-                Button { stan.przebierz() } label: {
-                    HStack(spacing: 6) { IkonaKoszulki().frame(width: 26, height: 26); Text(stan.t("przebierz")) }
-                }
-                .buttonStyle(.kreska(Kolory.rozowy, maly: true))
-                PrzelacznikiDzwieku()
-                PrzelacznikMotywu()
-                WyborJezyka()
-                Button(stan.t("oGrze")) { stan.klik(); stan.nakladka = .oGrze }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
-                Button(stan.t("wyjdz")) { stan.doStartu() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
-            }
-            .frame(maxWidth: 420)
+    private var album: some View {
+        Button { stan.pokazAlbum() } label: {
+            HStack(spacing: 6) { IkonaDziecka(id: "album").frame(width: 24, height: 24); Text(stan.napisAlbumu).monospacedDigit() }
+                .frame(maxWidth: .infinity)
         }
+        .buttonStyle(.kreska(Kolory.rozowy, maly: true))
+    }
+
+    private var strzalki: some View {
+        Button { stan.przelaczStrzalki() } label: {
+            HStack(spacing: 6) {
+                IkonaDziecka(id: "strzalka", kierunek: stan.strzalkiUkryte ? .gora : .dol).frame(width: 24, height: 24)
+                Text(stan.t(stan.strzalkiUkryte ? "pokazStrzalki" : "ukryjStrzalki"))
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+    }
+
+    private var wyjdz: some View {
+        Button { stan.doStartu() } label: { Text(stan.t("wyjdz")).frame(maxWidth: .infinity) }
+            .buttonStyle(.kreska(Kolory.zielony, maly: true))
+    }
+}
+
+/// „Dźwięk: włączony/wyłączony” — przycisk dla dziecka, wycisza naraz muzykę i dźwięki.
+struct PrzyciskDzwieku: View {
+    @Environment(StanGry.self) private var stan
+    var pelnaSzerokosc = false
+    var body: some View {
+        Button { stan.przelaczDzwiek() } label: {
+            Text(stan.t(stan.dzwiekWlaczony ? "dzwiekWl" : "dzwiekWyl")).frame(maxWidth: pelnaSzerokosc ? .infinity : nil)
+        }
+        .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+        .accessibilityAddTraits(stan.dzwiekWlaczony ? .isSelected : [])
     }
 }
 

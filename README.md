@@ -26,7 +26,7 @@ instalacja PWA, pełny ekran, zdjęcia rysunków.
 - [x] Dostęp z przewodnikiem: wskazówka dla rodzica w „Dla rodzica”, jak zablokować telefon w grze (funkcja iOS).
 - [x] Lepsze wibracje: przy zebraniu przedmiotu, radość przy kotku i nowej naklejce, wyłącznik w ustawieniach.
 - [x] Przygotowanie do App Store: manifest prywatności (`PrivacyInfo.xcprivacy`), teksty i formularze w `AppStore/`.
-- [ ] Uporządkowanie menu i przycisków w grze.
+- [x] Uporządkowanie menu: dla dziecka start (Graj, Album, Przebierz, Dźwięk) i menu pauzy, ustawienia w „Dla rodzica”.
 - [ ] Zrzuty ekranu, polityka prywatności na witrynie, konto Apple Developer, TestFlight (właściciel).
 
 **Później (1.1 i dalej):** tryb „Zaplanuj drogę z robotem”, kontroler do gier, widżet na ekran główny,

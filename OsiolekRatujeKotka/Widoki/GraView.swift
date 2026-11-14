@@ -107,19 +107,8 @@ struct PasekGry: View {
     }
 
     @ViewBuilder private var przyciski: some View {
-        // Pokaż/ukryj strzałki: bez nich labirynt zajmuje więcej ekranu (sterowanie palcem na planszy zostaje).
-        Button { stan.przelaczStrzalki() } label: {
-            IkonaDziecka(id: "strzalka", kierunek: stan.strzalkiUkryte ? .gora : .dol)
-                .frame(width: 24, height: 24)
-                .opacity(stan.strzalkiUkryte ? 0.5 : 1)
-        }
-        .buttonStyle(.kreska(Kolory.niebieski, maly: true))
-        .accessibilityLabel(stan.t(stan.strzalkiUkryte ? "pokazStrzalki" : "ukryjStrzalki"))
+        // Na pasku tylko to, czego dziecko potrzebuje w trakcie labiryntu; album i strzałki są w menu.
         PrzyciskPodpowiedzi()
-        Button { stan.pokazAlbum() } label: {
-            HStack(spacing: 4) { IkonaDziecka(id: "album").frame(width: 24, height: 24); Text(stan.napisAlbumu).monospacedDigit().napisPaska() }
-        }
-        .buttonStyle(.kreska(Kolory.rozowy, maly: true))
         Button { stan.pauza() } label: {
             HStack(spacing: 4) { IkonaDziecka(id: "menu").frame(width: 24, height: 24); Text(stan.t("menu")).napisPaska() }
         }

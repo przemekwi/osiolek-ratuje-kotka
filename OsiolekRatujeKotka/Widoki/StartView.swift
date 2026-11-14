@@ -4,7 +4,7 @@ import SwiftUI
 struct StartView: View {
     @Environment(StanGry.self) private var stan
     @State private var oknoRodzica = false
-    @State private var oGrze = false
+    @State private var album = false
 
     var body: some View {
         GeometryReader { geo in
@@ -32,7 +32,20 @@ struct StartView: View {
         }
         .background(Kolory.tlo.ignoresSafeArea())
         .overlay { if oknoRodzica { OknoRodzica { oknoRodzica = false } } }
-        .overlay { if oGrze { OGrzeView { oGrze = false } } }
+        .overlay {
+            if album {
+                GeometryReader { geo in
+                    ZStack {
+                        Color.black.opacity(0.44).ignoresSafeArea()
+                        ScrollView {
+                            OknoAlbumu(rozmiarEkranu: geo.size) { album = false }.frame(maxWidth: .infinity)
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .defaultScrollAnchor(.center)
+                    }
+                }
+            }
+        }
     }
 
     private func tytul(_ rozmiar: CGFloat) -> some View {
@@ -45,17 +58,21 @@ struct StartView: View {
 
     private var przyciski: some View {
         VStack(spacing: 12) {
+            // Dla dziecka: duży „Graj”, album, szafa i wyciszenie. Ustawienia są w „Dla rodzica” (za bramką).
             Button { stan.graj() } label: { Text(stan.t("graj")).frame(maxWidth: .infinity) }.buttonStyle(.kreska)
-            PrzelacznikiDzwieku()
-            // Jak na stronie: „Kolory” i „O grze” obok siebie.
             Rzad {
-                PrzelacznikMotywu()
-                Button(stan.t("oGrze")) { stan.klik(); oGrze = true }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
-            }
-            WyborJezyka()
-            // Ustawienia limitu czasu za bramką rodzica.
-            Button(stan.t("dlaRodzica")) { stan.klik(); oknoRodzica = true }
+                Button { stan.klik(); album = true } label: {
+                    HStack(spacing: 6) { IkonaDziecka(id: "album").frame(width: 24, height: 24); Text(stan.napisAlbumu).monospacedDigit() }
+                }
                 .buttonStyle(.kreska(Kolory.rozowy, maly: true))
+                Button { stan.szafa() } label: {
+                    HStack(spacing: 6) { IkonaKoszulki().frame(width: 26, height: 26); Text(stan.t("przebierz")) }
+                }
+                .buttonStyle(.kreska(Kolory.rozowy, maly: true))
+            }
+            PrzyciskDzwieku()
+            Button(stan.t("dlaRodzica")) { stan.klik(); oknoRodzica = true }
+                .buttonStyle(.kreska(Kolory.karta, maly: true))
         }
         .frame(maxWidth: 420)
     }

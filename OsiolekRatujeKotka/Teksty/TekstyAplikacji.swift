@@ -149,6 +149,32 @@ enum TekstyAplikacji {
             "es": "Toca para dibujarlo otra vez.", "de": "Tippe, um es noch einmal zu zeichnen.", "it": "Tocca per disegnarlo ancora.",
             "zh-Hans": "点一下再画一次。", "zh-Hant": "點一下再畫一次。",
         ],
+        "dzwiekWl": [
+            "pl": "Dźwięk: włączony", "en": "Sound: on", "fr": "Son : activé", "es": "Sonido: activado",
+            "de": "Ton: an", "it": "Suono: attivo", "zh-Hans": "声音：开", "zh-Hant": "聲音：開",
+        ],
+        "dzwiekWyl": [
+            "pl": "Dźwięk: wyłączony", "en": "Sound: off", "fr": "Son : désactivé", "es": "Sonido: desactivado",
+            "de": "Ton: aus", "it": "Suono: disattivo", "zh-Hans": "声音：关", "zh-Hant": "聲音：關",
+        ],
+        "ustawieniaGry": [
+            "pl": "Ustawienia gry", "en": "Game settings", "fr": "Réglages du jeu", "es": "Ajustes del juego",
+            "de": "Spieleinstellungen", "it": "Impostazioni del gioco", "zh-Hans": "游戏设置", "zh-Hant": "遊戲設定",
+        ],
+        "nowaGraPotwierdz": [
+            "pl": "Nowa gra zaczyna od poziomu 1 i usuwa album naklejek. Na pewno?",
+            "en": "A new game starts from level 1 and clears the sticker album. Are you sure?",
+            "fr": "Une nouvelle partie recommence au niveau 1 et vide l’album d’autocollants. Vous êtes sûr ?",
+            "es": "Una partida nueva empieza en el nivel 1 y borra el álbum de pegatinas. ¿Seguro?",
+            "de": "Ein neues Spiel beginnt bei Level 1 und leert das Stickeralbum. Sicher?",
+            "it": "Una nuova partita ricomincia dal livello 1 e svuota l’album di adesivi. Sicuro?",
+            "zh-Hans": "新游戏会从第1关开始，并清空贴纸相册。确定吗？",
+            "zh-Hant": "新遊戲會從第1關開始，並清空貼紙相簿。確定嗎？",
+        ],
+        "nowaGraTak": [
+            "pl": "Tak, nowa gra", "en": "Yes, new game", "fr": "Oui, nouvelle partie", "es": "Sí, partida nueva",
+            "de": "Ja, neues Spiel", "it": "Sì, nuova partita", "zh-Hans": "是的，新游戏", "zh-Hant": "是的，新遊戲",
+        ],
         "oKrotko": [
             "pl": "Osiołek szuka kotka w labiryncie i prowadzi go do domku. Każdy poziom to nowy labirynt. Bez reklam i bez internetu, gra niczego nie zbiera.",
             "en": "The donkey looks for the kitten in a maze and takes it home. Every level is a new maze. No ads, no internet, and the game collects nothing.",
