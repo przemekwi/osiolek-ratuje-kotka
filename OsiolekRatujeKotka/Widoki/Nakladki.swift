@@ -34,17 +34,34 @@ struct NakladkiGry: View {
 struct MenuPauzy: View {
     @Environment(StanGry.self) private var stan
     let rozmiarEkranu: CGSize
+    /// „Nowa gra” bez bramki rodzica, ale zawsze przez ostrzeżenie, że postęp i album znikną.
+    @State private var potwierdzNowa = false
 
     var body: some View {
-        if rozmiarEkranu.width > rozmiarEkranu.height && rozmiarEkranu.height <= 700 {
-            // Telefon poziomo: przyciski parami, „Graj dalej” i „Wyjdź” na całą szerokość.
+        if potwierdzNowa {
+            Panel {
+                Text(stan.t("nowaGra")).font(.kreda(26)).foregroundStyle(Kolory.tekst).accessibilityAddTraits(.isHeader)
+                Text(stan.t("nowaGraPotwierdz")).font(.kreda(17, gruby: false)).foregroundStyle(Kolory.tekst)
+                    .multilineTextAlignment(.center)
+                VStack(spacing: 12) {
+                    Button { potwierdzNowa = false; stan.wznow() } label: { Text(stan.t("grajDalej")).frame(maxWidth: .infinity) }
+                        .buttonStyle(.kreska(Kolory.zolty, maly: true))
+                    Button { stan.klik(); potwierdzNowa = false; stan.nowaGra() } label: {
+                        Text(stan.t("nowaGraTak")).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.kreska(Kolory.karta, maly: true))
+                }
+                .frame(maxWidth: 420)
+            }
+        } else if rozmiarEkranu.width > rozmiarEkranu.height && rozmiarEkranu.height <= 700 {
+            // Telefon poziomo: przyciski parami, „Graj dalej” na całą szerokość.
             Panel(maksSzerokosc: 760) {
                 Text(stan.t("pauza")).font(.kreda(20)).foregroundStyle(Kolory.tekst)
                 Grid(horizontalSpacing: 12, verticalSpacing: 6) {
                     GridRow { grajDalej(maly: true).gridCellColumns(2) }
                     GridRow { przebierz; album }
                     GridRow { strzalki; PrzyciskDzwieku(pelnaSzerokosc: true) }
-                    GridRow { wyjdz.gridCellColumns(2) }
+                    GridRow { nowaGra; wyjdz }
                 }
             }
         } else {
@@ -56,6 +73,7 @@ struct MenuPauzy: View {
                     album
                     strzalki
                     PrzyciskDzwieku(pelnaSzerokosc: true)
+                    nowaGra
                     wyjdz
                 }
                 .frame(maxWidth: 420)
@@ -92,6 +110,11 @@ struct MenuPauzy: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+    }
+
+    private var nowaGra: some View {
+        Button { stan.klik(); potwierdzNowa = true } label: { Text(stan.t("nowaGra")).frame(maxWidth: .infinity) }
+            .buttonStyle(.kreska(Kolory.karta, maly: true))
     }
 
     private var wyjdz: some View {

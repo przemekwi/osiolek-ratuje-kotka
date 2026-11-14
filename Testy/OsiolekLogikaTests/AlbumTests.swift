@@ -35,4 +35,18 @@ final class AlbumTests: XCTestCase {
         XCTAssertEqual(n.y, 1140 - AlbumNaklejek.NH / 2)
         XCTAssertEqual(a.naklejkaPod(n.x!, n.y!), "osiolek")
     }
+
+    func testNaklejkaNaInnejNaklejce() {
+        var a = AlbumNaklejek(), los = Los(ziarno: 6)
+        a.dajNaklejke(&los); a.dajNaklejke(&los)
+        let druga = a.naklejki[1].id
+        a.przyklej("osiolek", 1000, 700)
+        a.przyklej(druga, 1010, 710)
+        XCTAssertEqual(a.przyklejone.count, 2, "obie przyklejone")
+        XCTAssertEqual(a.naklejkaPod(1005, 705), druga, "nowa leży na wierzchu")
+        // Przyklejoną naklejkę da się przesunąć swobodnie, także na inną.
+        a.naWierzch("osiolek")
+        a.przesun("osiolek", 1010, 710)
+        XCTAssertEqual(a.naklejkaPod(1010, 710), "osiolek")
+    }
 }
