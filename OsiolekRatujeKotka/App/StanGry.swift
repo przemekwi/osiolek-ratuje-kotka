@@ -3,8 +3,10 @@ import UIKit
 import Observation
 
 enum Ekran { case start, szafa, gra }
-enum Nakladka: Equatable { case menu, brawo, album, oGrze, rozdzial, krzak }
+enum Nakladka: Equatable { case menu, brawo, album, rozdzial, krzak }
 enum WyborMotywu: String, CaseIterable { case system, jasny, ciemny }
+/// Jak często odświeżać planszę: wcale (nic się nie rusza), rzadko (pulsowanie) albo płynnie (ruch). Oszczędza baterię.
+enum Tempo { case stoi, wolno, plynnie }
 
 /// Stan aplikacji widoczny dla SwiftUI. Logika poziomu żyje w `Rozgrywka`; tu są ekrany, nakładki,
 /// ustawienia i napisy, które zmieniają się rzadko (nie co klatkę), żeby nie przeliczać całego widoku 60× na sekundę.
@@ -48,6 +50,8 @@ final class StanGry {
     private(set) var podpPasek = 0.0
     /// Licznik pokazanych podpowiedzi — wyzwala rozjaśnienie żarówki.
     private(set) var podpGotowa = 0
+    /// Tempo odświeżania planszy (zmienia się rzadko, przy starcie i końcu ruchu).
+    private(set) var tempo: Tempo = .wolno
     var muzyka = true { didSet { Syntezator.wspolny.muzyka = muzyka; if muzyka && ekran == .gra { Syntezator.wspolny.wlaczMuzyke() } } }
     var dzwieki = true { didSet { Syntezator.wspolny.dzwieki = dzwieki } }
     /// Wibracje włączone (wyłącznik w „Dla rodzica”).
@@ -423,7 +427,7 @@ final class StanGry {
             }
         }
         odZapisu += dt
-        if odZapisu >= 5 { zapisz() }
+        if odZapisu >= 10 { zapisz() }
         guard ekran == .gra, !gra.lab.G.isEmpty, !limit.zablokowana else { return }
         gra.tik(min(0.05, dt))
         if brawoZa > 0 {
@@ -433,6 +437,11 @@ final class StanGry {
         let s = Int(gra.czas)
         if s != sekunda { sekunda = s }
         odswiezPodp()
+        let noweTempo: Tempo = gra.ruchNaPlanszy ? .plynnie : gra.spokojnaAnimacja ? .wolno : .stoi
+        if noweTempo != tempo {
+            tempo = noweTempo
+            zegar?.ustawTempo(plynnie: noweTempo == .plynnie)
+        }
     }
 
     private func odswiez() {
@@ -478,9 +487,7 @@ final class StanGry {
     var napisZadania: String {
         t(gra.lab.trybGry == .plan ? "zadaniePlan" : faza == .szukaj ? "zadanieKotek" : "zadanieDomek")
     }
-    var napisCzasu: String { t("czas", ["s": sekunda]) }
     var tytulBrawo: String { t(gra.lab.trybGry == .plan ? "brawoPlanH" : "brawoH") }
-    var wynikBrawo: String { t("wynikCzas", ["s": Int(gra.czas)]) }
     var wynikPodp: String {
         var s = ""
         if gra.sercaN > 0 {
@@ -512,12 +519,18 @@ final class ZegarGry: NSObject {
         ostatni = 0
         let l = CADisplayLink(target: self, selector: #selector(klatka(_:)))
         // Ekrany 120 Hz (ProMotion): ruch osiołka liczony co klatkę ekranu, nie co drugą.
-        l.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
+        l.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
         l.add(to: .main, forMode: .common)
         link = l
     }
 
     func stop() { link?.invalidate(); link = nil }
+
+    /// Ruch: do 120 klatek na ekranach ProMotion; spoczynek: 60 klatek wystarcza do liczenia czasu i reakcji na dotyk.
+    func ustawTempo(plynnie: Bool) {
+        link?.preferredFrameRateRange = plynnie ? CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
+                                                : CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+    }
 
     @objc private func klatka(_ l: CADisplayLink) {
         let teraz = l.timestamp

@@ -5,9 +5,7 @@ struct NakladkiGry: View {
     @Environment(StanGry.self) private var stan
 
     var body: some View {
-        if stan.nakladka == .oGrze {
-            OGrzeView { stan.nakladka = .menu }
-        } else if let n = stan.nakladka {
+        if let n = stan.nakladka {
             GeometryReader { geo in
             ZStack {
                 Color.black.opacity(0.44).ignoresSafeArea()
@@ -19,7 +17,6 @@ struct NakladkiGry: View {
                         case .album: OknoAlbumu(rozmiarEkranu: geo.size)
                         case .rozdzial: KoniecRozdzialu()
                         case .krzak: WyjasnienieKrzaka()
-                        case .oGrze: EmptyView()
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 0)

@@ -83,12 +83,6 @@ final class LimitTests: XCTestCase {
         XCTAssertFalse(l.zablokowana)
     }
 
-    func testLiczbySlownie() {
-        XCTAssertEqual(Limit.slownie(21, "pl"), "dwadzieścia jeden")
-        XCTAssertEqual(Limit.slownie(38, "it"), "trentotto")
-        XCTAssertEqual(Limit.slownie(41, "fr"), "quarante et un")
-        XCTAssertEqual(Limit.slownie(24, "de"), "vierundzwanzig")
-    }
 }
 
 final class ZapisTests: XCTestCase {

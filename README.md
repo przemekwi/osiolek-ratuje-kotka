@@ -106,11 +106,25 @@ Limit czasu dla dzieci 4–8 lat (rozbudowany względem strony; zasady ustalone 
 Test w Xcode bez czekania: **Product → Scheme → Edit Scheme… → Run → Arguments** i zaznacz `-szybkiLimit`
 (tylko wersja Debug: czas limitu płynie 30× szybciej, 15 minut mija w 30 sekund).
 
+## Bezpieczeństwo, prywatność, bateria i dostępność
+
+- **Sieć:** gra nie łączy się z internetem. Jedyne odnośniki (wilde.pl, blog, gry.wilde.pl w „O grze”) otwierają
+  Safari dopiero po bramce rodzica. Brak uprawnień (aparat, mikrofon, lokalizacja, zdjęcia, kontakty), brak
+  zewnętrznych bibliotek, analityki, reklam i zakupów. Manifest prywatności: `PrivacyInfo.xcprivacy`.
+- **Dane:** jeden plik `zapis.json` w katalogu aplikacji (Application Support); usunięcie aplikacji go usuwa.
+- **Bateria:** plansza odświeża się tylko przy ruchu (do 120 klatek na ekranach ProMotion), przy samym pulsowaniu
+  30 razy na sekundę, a w spoczynku i pod nakładkami wcale. Postacie z obwódką są rysowane raz i trzymane jako
+  obrazki. Przy wyłączonej muzyce i dźwiękach silnik dźwięku stoi; w tle gra się zatrzymuje. Zapis co 10 s gry.
+- **Dostępność:** VoiceOver (opisy przycisków i planszy w 8 językach), ograniczenie ruchu (bez animacji podskoków,
+  pulsowania i rysowania), kontrast co najmniej 4,5:1 w obu motywach, przyciski co najmniej 44 pt, większa czcionka
+  systemowa do „xxLarge”, klawiatura sprzętowa, sterowanie bez precyzyjnych gestów.
+
 ## Biblioteki i licencje
 
 Aplikacja nie używa żadnych zewnętrznych bibliotek. Korzysta tylko z frameworków systemowych Apple:
 SwiftUI, UIKit (pętla klatek `CADisplayLink`, klawiatura sprzętowa, kolory zależne od motywu), AVFoundation (syntezator dźwięku), Observation i Foundation.
-Font Chalkboard SE jest fontem systemowym iOS. Testy używają XCTest.
+Font Chalkboard SE jest fontem systemowym iOS. Testy używają XCTest. Zdjęcia rysunków w `Zasoby/Zdjecia/` to
+kartki narysowane przez córkę autora (te same co na gry.wilde.pl).
 
 Narzędzia pomocnicze (nie trafiają do aplikacji): Node.js i Playwright (Apache-2.0) do eksportu danych i ikony.
 

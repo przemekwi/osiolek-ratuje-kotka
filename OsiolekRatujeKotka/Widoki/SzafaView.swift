@@ -18,7 +18,7 @@ struct SzafaView: View {
                         PodgladOsiolka().frame(width: min(geo.size.width * 0.24, 190))
                         VStack(spacing: 6) {
                             ScrollView { Koszulki(maly: true).padding(2) }.scrollIndicators(.visible)
-                            PaletaKolorow(rozmiar: 36, kolumny: 10)
+                            PaletaKolorow(rozmiar: 44, kolumny: 10)
                         }
                     }
                 } else {

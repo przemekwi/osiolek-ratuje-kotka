@@ -149,36 +149,4 @@ struct Limit: Codable, Equatable {
         if blokada == .brak && teraz - zapisano >= Limit.PRZERWA_PO_SESJI { nowaSesja() }
     }
 
-    /// Liczba 21–49 słowami w języku gry (`SLOWA` z gry).
-    static func slownie(_ n: Int, _ jezyk: String) -> String {
-        let d = n / 10, j = n % 10
-        switch jezyk {
-        case "pl":
-            return ["", "", "dwadzieścia", "trzydzieści", "czterdzieści"][d]
-                + (j != 0 ? " " + ["", "jeden", "dwa", "trzy", "cztery", "pięć", "sześć", "siedem", "osiem", "dziewięć"][j] : "")
-        case "en":
-            return ["", "", "twenty", "thirty", "forty"][d]
-                + (j != 0 ? "-" + ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"][j] : "")
-        case "fr":
-            let dz = ["", "", "vingt", "trente", "quarante"][d]
-            return dz + (j == 1 ? " et un" : j != 0 ? "-" + ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"][j] : "")
-        case "es":
-            let u = ["", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"][j]
-            if n < 30 {
-                return ["veinte", "veintiuno", "veintidós", "veintitrés", "veinticuatro", "veinticinco", "veintiséis", "veintisiete",
-                        "veintiocho", "veintinueve"][j]
-            }
-            return ["", "", "", "treinta", "cuarenta"][d] + (j != 0 ? " y " + u : "")
-        case "de":
-            return (j != 0 ? ["", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"][j] + "und" : "")
-                + ["", "", "zwanzig", "dreißig", "vierzig"][d]
-        case "it":
-            // Dziesiątka traci samogłoskę przed „uno” i „otto” (ventuno, trentotto), a „tre” na końcu ma akcent.
-            let dz = ["", "", "venti", "trenta", "quaranta"][d]
-            let u = ["", "uno", "due", "tré", "quattro", "cinque", "sei", "sette", "otto", "nove"][j]
-            return j == 1 || j == 8 ? String(dz.dropLast()) + u : dz + u
-        default: // zh-Hans, zh-Hant
-            return ["", "", "二", "三", "四"][d] + "十" + (j != 0 ? ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"][j] : "")
-        }
-    }
 }

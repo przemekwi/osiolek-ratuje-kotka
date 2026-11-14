@@ -160,7 +160,10 @@ struct PlanszaView: View {
                     let S = Geometria(TW: gra.lab.TW, TH: gra.lab.TH, szer: geo.size.width, wys: geo.size.height)
                     ZStack(alignment: .topLeading) {
                         TloPlanszy(lab: gra.lab, S: S, ciemny: ciemny, wersja: stan.wersja).equatable()
-                        TimelineView(.animation(paused: stan.nakladka != nil)) { tl in
+                        // Plansza odświeża się tylko wtedy, gdy coś się rusza (bateria): płynnie przy ruchu,
+                        // 30 razy na sekundę przy samym pulsowaniu, wcale w spoczynku i pod nakładką.
+                        TimelineView(.animation(minimumInterval: stan.tempo == .wolno ? 1.0 / 30 : nil,
+                                                paused: stan.nakladka != nil || stan.tempo == .stoi)) { tl in
                             Canvas { g, _ in
                                 rysujPlansze(Plotno(g), gra, S, Paleta(ciemna: ciemny),
                                              t: tl.date.timeIntervalSinceReferenceDate, koszulka: stan.koszulka)

@@ -26,8 +26,21 @@ final class Syntezator {
     private var uruchomiony = false
     private var zegarMuzyki: Timer?
 
-    var dzwieki = true
-    var muzyka = true { didSet { if !muzyka { zamek.lock(); tony.removeAll { $0.muzyka }; zamek.unlock() } } }
+    var dzwieki = true { didSet { dopasujSilnik() } }
+    var muzyka = true {
+        didSet {
+            if !muzyka {
+                zamek.lock(); tony.removeAll { $0.muzyka }; zamek.unlock()
+                zegarMuzyki?.invalidate(); zegarMuzyki = nil
+            }
+            dopasujSilnik()
+        }
+    }
+
+    /// Przy wyłączonej muzyce i dźwiękach silnik dźwięku stoi (bateria); następny dźwięk uruchomi go ponownie.
+    private func dopasujSilnik() {
+        if !muzyka && !dzwieki && uruchomiony { silnik.pause() }
+    }
     /// W trybie dla dziecka muzyka gra o połowę ciszej.
     var glosMuzyki = 0.5
     private var kroki = 0
@@ -58,7 +71,7 @@ final class Syntezator {
     func przygotuj() { _ = uruchom() }
 
     func wstrzymaj() { if uruchomiony { silnik.pause() } }
-    func wznow() { if uruchomiony { try? silnik.start() } }
+    func wznow() { if uruchomiony && (muzyka || dzwieki) { try? silnik.start() } }
 
     private func renderuj(_ n: Int, _ bufory: UnsafeMutableAudioBufferListPointer) {
         zamek.lock()

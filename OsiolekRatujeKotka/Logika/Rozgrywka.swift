@@ -272,6 +272,11 @@ final class Rozgrywka {
 }
 
 extension Rozgrywka {
+    /// Coś na planszy porusza się płynnie (osiołek, kotek, radość, uderzenie, znikający krzaczek).
+    var ruchNaPlanszy: Bool { osiol.cel >= 0 || kot.cel >= 0 || radosc > 0 || bum > 0 || lab.przeszkoda.znika > 0 }
+    /// Tylko łagodna animacja: pulsujące serduszko albo łapki podpowiedzi (wystarczy rzadsze odświeżanie).
+    var spokojnaAnimacja: Bool { (lab.przeszkoda.pole >= 0 && !lab.przeszkoda.otwarta) || (droga != nil && drogaZostalo > 0) }
+
     /// Ułożenie planszy nie pasuje do ramki (np. labirynt pionowy na ekranie poziomym).
     func zlyKsztalt(szer: Double, wys: Double) -> Bool {
         guard !lab.G.isEmpty, lab.TW != lab.TH, szer > 0, wys > 0 else { return false }
