@@ -38,7 +38,7 @@ Grę zrobiłem razem z córką: ona wymyśla i rysuje, ja składam z tego grę.
 labirynt,osiołek,kotek,dzieci,przedszkolak,logiczna,rysunki,naklejki,spokojna,bez reklam,offline
 
 **Adres wsparcia:** https://gry.wilde.pl/osiolek-ratuje-kotka-w-labiryncie/
-**Polityka prywatności:** adres strony z tekstem z `polityka-prywatnosci.md`
+**Polityka prywatności:** https://przemyslaw.wilde.pl/polityka-prywatnosci/osiolek-ratuje-kotka/ (EN: https://przemyslaw.wilde.pl/en/privacy-policy/donkey-rescues-the-kitten/); źródło tekstu: `polityka-prywatnosci.md`
 
 ## English
 
