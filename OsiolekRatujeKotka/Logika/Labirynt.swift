@@ -456,20 +456,6 @@ final class Labirynt {
         przeszkoda = Przeszkoda()
     }
 
-    /// Najkrótsza droga (same pola) od domku do celu, z domkiem na początku.
-    func najkrotszaDroga(do cel: Int) -> [Int] {
-        let d = bfs(domI, bezKrzaka: true)
-        var wynik: [Int] = []
-        var cur = cel
-        while true {
-            if jestPolem(cur) { wynik.insert(cur, at: 0) }
-            if cur == domI { break }
-            let nast = krokBlizej(cur, d)
-            if nast == cur { break }
-            cur = nast
-        }
-        return wynik
-    }
 }
 
 /// Geometria planszy na ekranie: pola mają szerokość C, ściany C·SCIANA (`geometria` i `srodek` z gry).

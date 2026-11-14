@@ -39,7 +39,7 @@ strzałki po lewej albo prawej stronie, przycisk „Oceń grę” w „Dla rodzi
 1. Xcode 16 albo nowszy (projekt używa folderów synchronizowanych), iOS/iPadOS 18 lub nowszy.
 2. Otwórz `OsiolekRatujeKotka.xcodeproj`.
 3. W ustawieniach celu **OsiolekRatujeKotka → Signing & Capabilities** wybierz swój zespół (Team).
-   Identyfikator pakietu to `pl.wilde.osiolek`; zmień go, jeśli jest zajęty.
+   Identyfikator pakietu to `pl.wilde.osiolek-ratuje-kotka` (po publikacji nie da się go zmienić).
 4. Wybierz symulator (np. iPhone 16 albo iPad) albo podłączone urządzenie i naciśnij **Run** (⌘R).
 
 Testy logiki (labirynt, ruch, podpowiedź, album, limit czasu, zapis): w Xcode **Product → Test** (⌘U).
@@ -101,7 +101,9 @@ Limit czasu dla dzieci 4–8 lat (rozbudowany względem strony; zasady ustalone 
 - po sesji przerwa co najmniej 30 minut, potem dziecko gra dalej samo; po limicie dziennym — do jutra;
 - przedłużenia tylko za bramką rodzica (mnożenie z tabliczki, np. „Ile to 7 × 8?”, odpowiedź wpisana cyframi),
   coraz krótsze (10 albo 5, potem 5 albo 3), najwyżej dwa dziennie;
-- licznik przetrwa zamknięcie aplikacji; pół godziny z zamkniętą aplikacją liczy się jako przerwa po sesji.
+- licznik przetrwa zamknięcie aplikacji; pół godziny z zamkniętą aplikacją liczy się jako przerwa po sesji;
+- **tryb dla dorosłych**: w „Dla rodzica” i na ekranie przerwy, za drugą, trudniejszą bramką (np. 17 × 8)
+  i z ostrzeżeniem, wyłącza limity, ostrzeżenia i przerwy do północy; następnego dnia sam wygasa.
 
 Test w Xcode bez czekania: **Product → Scheme → Edit Scheme… → Run → Arguments** i zaznacz `-szybkiLimit`
 (tylko wersja Debug: czas limitu płynie 30× szybciej, 15 minut mija w 30 sekund).

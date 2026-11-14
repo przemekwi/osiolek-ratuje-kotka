@@ -1,22 +1,19 @@
 import SwiftUI
 
-/// Bramka rodzica (wymóg Apple w kategorii dla dzieci): działanie z tabliczki mnożenia, np. „Ile to 7 × 8?”,
-/// bez podpowiedzi. Odpowiedź wpisuje się na klawiaturze cyfr w grze (bez klawiatury systemowej). Przy błędzie nowe działanie.
-struct BramkaRodzica: View {
+/// Klawiatura cyfr w grze (bez klawiatury systemowej): pole z wpisaną liczbą, cyfry, kasowanie i „OK”.
+struct KlawiaturaCyfr: View {
     @Environment(StanGry.self) private var stan
-    let otwarta: () -> Void
-    @State private var wpisane = ""
-    @State private var blad = false
+    @Binding var wpisane: String
+    let etykieta: String
+    let ok: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
-            Text(stan.t("rodzicMnozenie")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
-            Text(stan.pytanieRodzica).font(.kreda(24)).multilineTextAlignment(.center)
             Text(wpisane.isEmpty ? " " : wpisane)
                 .font(.kreda(28)).monospacedDigit()
                 .frame(width: 120, height: 48)
                 .kreska(Kolory.karta)
-                .accessibilityLabel(stan.pytanieRodzica)
+                .accessibilityLabel(etykieta)
                 .accessibilityValue(wpisane)
             Grid(horizontalSpacing: 8, verticalSpacing: 8) {
                 ForEach([[1, 2, 3], [4, 5, 6], [7, 8, 9]], id: \.self) { rz in
@@ -29,11 +26,39 @@ struct BramkaRodzica: View {
                     .buttonStyle(.kreska(Kolory.karta, maly: true))
                     .accessibilityLabel(stan.t("cofnijCyfre"))
                     cyfra(0)
-                    Button(action: sprawdz) { Text("OK").frame(width: 44, height: 30) }
+                    Button(action: ok) { Text("OK").frame(width: 44, height: 30) }
                         .buttonStyle(.kreska(Kolory.zielony, maly: true))
                         .disabled(wpisane.isEmpty)
                         .accessibilityLabel(stan.t("odblokuj"))
                 }
+            }
+        }
+    }
+
+    private func cyfra(_ c: Int) -> some View {
+        Button {
+            stan.klik()
+            if wpisane.count < 4 { wpisane += String(c) }
+        } label: { Text("\(c)").frame(width: 44, height: 30) }
+        .buttonStyle(.kreska(Kolory.karta, maly: true))
+    }
+}
+
+/// Bramka rodzica (wymóg Apple w kategorii dla dzieci): działanie z tabliczki mnożenia, np. „Ile to 7 × 8?”,
+/// bez podpowiedzi, odpowiedź na klawiaturze cyfr w grze. Przy błędzie nowe działanie.
+struct BramkaRodzica: View {
+    @Environment(StanGry.self) private var stan
+    let otwarta: () -> Void
+    @State private var wpisane = ""
+    @State private var blad = false
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(stan.t("rodzicMnozenie")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
+            Text(stan.pytanieRodzica).font(.kreda(24)).multilineTextAlignment(.center)
+            KlawiaturaCyfr(wpisane: $wpisane, etykieta: stan.pytanieRodzica) {
+                if stan.odblokuj(Int(wpisane)) { blad = false; otwarta() } else { blad = true }
+                wpisane = ""
             }
             if blad { Text(stan.t("rodzicBlad")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche) }
         }
@@ -41,19 +66,54 @@ struct BramkaRodzica: View {
         .frame(maxWidth: .infinity)
         .kreska(Color.clear)
     }
+}
 
-    private func cyfra(_ c: Int) -> some View {
-        Button {
-            stan.klik()
-            if wpisane.count < 3 { wpisane += String(c) }
-        } label: { Text("\(c)").frame(width: 44, height: 30) }
-        .buttonStyle(.kreska(Kolory.karta, maly: true))
+/// Tryb dla dorosłych: wyłącza limity czasu do północy. Ostrzeżenie i druga, trudniejsza bramka
+/// (liczba dwucyfrowa razy jednocyfrowa, np. 17 × 8), której dziecko 4–8 lat nie rozwiąże.
+struct TrybDoroslych: View {
+    @Environment(StanGry.self) private var stan
+    @State private var rozwiniety = false
+    @State private var a = 0
+    @State private var b = 0
+    @State private var wpisane = ""
+    @State private var blad = false
+
+    var body: some View {
+        let _ = stan.wersjaLimitu
+        VStack(spacing: 8) {
+            if stan.limit.bezLimitu {
+                Text(stan.t("doroslyWlaczony")).font(.kreda(16)).foregroundStyle(Kolory.zaznaczenie).multilineTextAlignment(.center)
+                Button(stan.t("doroslyWylacz")) { stan.wylaczBezLimitu() }.buttonStyle(.kreska(Kolory.zielony, maly: true))
+            } else if !rozwiniety {
+                Button(stan.t("doroslyH")) { stan.klik(); nowePytanie(); rozwiniety = true }
+                    .buttonStyle(.kreska(Kolory.karta, maly: true))
+            } else {
+                Text(stan.t("doroslyH")).font(.kreda(18))
+                Text(stan.t("doroslyOpis")).font(.kreda(14, gruby: false)).multilineTextAlignment(.center)
+                // Ostrzeżenie: wyraźne, na tle w kolorze wyróżnienia.
+                Text(stan.t("doroslyOstrzezenie"))
+                    .font(.kreda(15))
+                    .multilineTextAlignment(.center)
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .kreska(Kolory.rozowy)
+                    .foregroundStyle(Kolory.napisPrzycisku)
+                Text(stan.t("doroslyBramka")).font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche)
+                Text(stan.t("ileTo", ["s": "\(a) × \(b)"])).font(.kreda(24))
+                KlawiaturaCyfr(wpisane: $wpisane, etykieta: stan.t("ileTo", ["s": "\(a) × \(b)"])) {
+                    if Int(wpisane) == a * b { blad = false; rozwiniety = false; stan.wlaczBezLimitu() } else { blad = true; nowePytanie() }
+                    wpisane = ""
+                }
+                if blad { Text(stan.t("rodzicBlad")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche) }
+                Button(stan.t("wroc")) { stan.klik(); rozwiniety = false }.buttonStyle(.kreska(Kolory.karta, maly: true))
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .kreska(Color.clear)
     }
 
-    private func sprawdz() {
-        if stan.odblokuj(Int(wpisane)) { blad = false; otwarta() } else { blad = true }
-        wpisane = ""
-    }
+    private func nowePytanie() { a = Int.random(in: 12...19); b = Int.random(in: 6...9) }
 }
 
 /// Ustawienia limitów dla rodzica: sesja i cały dzień, dzisiejszy czas gry, narzędzia systemowe.
@@ -83,6 +143,7 @@ struct UstawieniaLimitu: View {
             .frame(maxWidth: .infinity)
             .kreska(Kolory.tlo)
             Text(stan.t("systemInfo")).font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
+            TrybDoroslych()
         }
         .padding(12)
         .frame(maxWidth: .infinity)
@@ -175,6 +236,8 @@ struct PrzerwaView: View {
                     }
                 }
             }
+            // Dorosły, który sam chce grać dłużej, może wyłączyć limity do północy (za trudniejszą bramką).
+            TrybDoroslych()
         }
         .padding(12)
         .frame(maxWidth: .infinity)

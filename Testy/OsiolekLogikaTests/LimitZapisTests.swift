@@ -85,6 +85,22 @@ final class LimitTests: XCTestCase {
 
 }
 
+final class TrybDoroslychTests: XCTestCase {
+    func testBezLimituDoPolnocy() {
+        var l = Limit(), los = Los(ziarno: 7)
+        l.nowyDzien("2026-11-14")
+        _ = l.licz(30 * 60, wLabiryncie: false)
+        l.przerwa(teraz: 0, &los)
+        XCTAssertEqual(l.blokada, .dzien)
+        l.wlaczBezLimitu()
+        XCTAssertFalse(l.zablokowana)
+        XCTAssertEqual(l.licz(5 * 3600, wLabiryncie: false), .nic, "bez ostrzeżeń i przerw")
+        XCTAssertFalse(l.czasMinal)
+        l.nowyDzien("2026-11-15")
+        XCTAssertFalse(l.bezLimitu, "następnego dnia tryb wygasa")
+    }
+}
+
 final class ZapisTests: XCTestCase {
     func testMigawkaWracaTakaSama() throws {
         let r = Rozgrywka(lab: Labirynt(los: Los(ziarno: 11)))

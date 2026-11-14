@@ -37,6 +37,8 @@ struct Limit: Codable, Equatable {
     var dogrywka = 0.0
     /// Bramka rodzica: a × b (obie liczby 6–9) — dla dorosłego chwila, dla dziecka 4–8 lat za trudne.
     var a = 0
+    /// Tryb dla dorosłych: dzień (rrrr-mm-dd), w którym limity są wyłączone. Następnego dnia tryb sam wygasa.
+    var bezLimituDzien: String?
     var b = 0
 
     init() {}
@@ -59,13 +61,16 @@ struct Limit: Codable, Equatable {
         dogrywka = (try? c.decode(Double.self, forKey: .dogrywka)) ?? 0
         a = (try? c.decode(Int.self, forKey: .a)) ?? 0
         b = (try? c.decode(Int.self, forKey: .b)) ?? 0
+        bezLimituDzien = try? c.decode(String.self, forKey: .bezLimituDzien)
     }
 
     var zablokowana: Bool { blokada != .brak }
     var zostaloDnia: Double { max(0, Double(dzienMin) * 60 - dzisiaj) }
     /// Czas do końca: sesji albo dnia, co pierwsze.
     var zostalo: Double { min(limitSesji - sesja, zostaloDnia) }
-    var czasMinal: Bool { blokada == .brak && zostalo <= 0 }
+    var czasMinal: Bool { !bezLimitu && blokada == .brak && zostalo <= 0 }
+    /// Tryb dla dorosłych włączony na dziś.
+    var bezLimitu: Bool { !dzien.isEmpty && bezLimituDzien == dzien }
     var odpowiedz: Int { a * b }
 
     static func kluczDnia(_ data: Date) -> String {
@@ -88,6 +93,8 @@ struct Limit: Codable, Equatable {
     mutating func licz(_ dt: Double, wLabiryncie: Bool) -> KrokLimitu {
         guard blokada == .brak else { return .nic }
         sesja += dt; dzisiaj += dt
+        // Tryb dla dorosłych: czas się liczy (podgląd dla rodzica), ale nie ma ostrzeżeń ani przerw.
+        if bezLimitu { return .nic }
         if zostalo <= 0 {
             // Dogrywka to czas, który minął po przekroczeniu limitu (sesji albo dnia): najwyżej 2 minuty na dokończenie.
             dogrywka = -zostalo
@@ -147,6 +154,19 @@ struct Limit: Codable, Equatable {
     mutating func poPowrocie(zapisano: Double, teraz: Double, dzien klucz: String) {
         nowyDzien(klucz)
         if blokada == .brak && teraz - zapisano >= Limit.PRZERWA_PO_SESJI { nowaSesja() }
+    }
+
+    /// Włącza tryb dla dorosłych do północy (zdejmuje też bieżącą przerwę).
+    mutating func wlaczBezLimitu() {
+        guard !dzien.isEmpty else { return }
+        bezLimituDzien = dzien
+        if blokada != .brak { blokada = .brak }
+        nowaSesja()
+    }
+
+    mutating func wylaczBezLimitu() {
+        bezLimituDzien = nil
+        nowaSesja()
     }
 
 }

@@ -81,7 +81,7 @@ extension Rozgrywka {
         serca = s.serca; sercaN = s.sercaN; zebrane = s.zebrane; przedmiot = s.przedmiot
         trasa = s.trasa; trasaKot = s.trasaKot; slady = s.slady
         podpowiedzi = s.podpowiedzi; czas = s.czas; start = s.start
-        oparty = nil; bum = 0; radosc = 0; pauza = false; porownanie = nil; droga = nil; drogaZostalo = 0
+        oparty = nil; bum = 0; radosc = 0; pauza = false; droga = nil; drogaZostalo = 0
         geo = nil
         podpStart()
         podp.maks = s.podpMaks

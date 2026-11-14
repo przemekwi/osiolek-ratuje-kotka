@@ -28,15 +28,4 @@ enum Teksty {
         return s
     }
 
-    /// „3 kroki”, „5 kroków” — odmiana jak w grze (polski: trzy formy, chiński: bez spacji).
-    static func kroki(_ jezyk: String, _ n: Int) -> String {
-        let f = surowy(jezyk, "kroki").tablica.map(\.napis)
-        guard !f.isEmpty else { return "\(n)" }
-        if jezyk.hasPrefix("zh") { return "\(n)\(f[0])" }
-        let i: Int
-        if jezyk == "pl" {
-            i = n == 1 ? 0 : (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) ? 1 : 2
-        } else { i = n == 1 ? 0 : 1 }
-        return "\(n) \(f[min(i, f.count - 1)])"
-    }
 }

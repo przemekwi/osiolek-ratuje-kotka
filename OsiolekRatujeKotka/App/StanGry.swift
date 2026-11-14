@@ -186,6 +186,23 @@ final class StanGry {
         odblokowano()
     }
 
+    /// Tryb dla dorosłych: bez limitu czasu do północy (za trudniejszą bramką i ostrzeżeniem).
+    func wlaczBezLimitu() {
+        klik()
+        limit.nowyDzien(Limit.kluczDnia(Date()))
+        limit.wlaczBezLimitu()
+        wersjaLimitu += 1
+        odblokowano()
+    }
+
+    func wylaczBezLimitu() {
+        klik()
+        limit.wylaczBezLimitu()
+        wersjaLimitu += 1
+        odswiezPrzerwe()
+        zapisz()
+    }
+
     /// Ustawienia rodzica (sesja i dzień).
     func ustawLimit(sesja: Int, dzien: Int) {
         limit.ustaw(sesja: sesja, dzien: dzien)
@@ -498,11 +515,6 @@ final class StanGry {
         let opis = gra.podpowiedzi == 0 ? t("bezPodp")
             : gra.podpMaks < 3 && gra.lab.trybGry != .plan ? t("malaPomoc") : t("podpN", ["n": gra.podpowiedzi])
         return s + opis
-    }
-    var wynikDrogi: String? {
-        guard let p = gra.porownanie else { return nil }
-        let n = Teksty.kroki(jezyk, p.najkrotsza.count - 1), tw = Teksty.kroki(jezyk, p.twoja.count - 1)
-        return p.twoja.count <= p.najkrotsza.count ? t("drogaNajkrotsza", ["n": n]) : t("drogaTwoja", ["t": tw, "n": n])
     }
 }
 

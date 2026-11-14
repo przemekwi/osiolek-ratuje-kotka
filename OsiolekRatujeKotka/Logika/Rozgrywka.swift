@@ -27,8 +27,6 @@ enum Zdarzenie: Equatable {
     case wygrana
 }
 
-/// Porównanie drogi dziecka z najkrótszą (plan na ekranie „Brawo”).
-struct Porownanie: Codable, Equatable { var twoja: [Int]; var najkrotsza: [Int] }
 
 /// Przebieg poziomu — przeniesiony 1:1 z obiektu `gra` i funkcji `idz`, `przesun`, `krokAnimacji`, `wygrana`.
 final class Rozgrywka {
@@ -54,7 +52,6 @@ final class Rozgrywka {
     var sercaN = 0
     var zebrane = 0
     var przedmiot: Przedmiot = .serce
-    var porownanie: Porownanie?
     /// Podpowiedź stopniowana (Podpowiedz.swift) i łapki aktualnie pokazanej drogi.
     var podp = StanPodp()
     var droga: [LapkaPodp]?
@@ -92,7 +89,7 @@ final class Rozgrywka {
         osiol = Ruchomy(pole: d, x: Double(ix(d)), y: Double(iy(d)), cel: -1)
         kot = Ruchomy(pole: k, x: Double(ix(k)), y: Double(iy(k)), cel: -1)
         oparty = nil; kroki = 0; czas = 0; start = false; podpowiedzi = 0; bum = 0
-        slady = []; pauza = false; radosc = 0; trasa = [d]; trasaKot = 0; porownanie = nil; droga = nil; drogaZostalo = 0
+        slady = []; pauza = false; radosc = 0; trasa = [d]; trasaKot = 0; droga = nil; drogaZostalo = 0
         serca = losujSerca(); sercaN = serca.count; zebrane = 0
         let krzak = lab.przeszkoda.pole >= 0
         przedmiot = lab.los.pick(Przedmiot.allCases.filter { $0 != przedmiot && !($0 == .serce && krzak) })
@@ -251,22 +248,12 @@ final class Rozgrywka {
         return lab.trudnosc + (trudno ? 0 : 1)
     }
 
-    /// Plan tylko przy najkrótszej drodze (pochwała) albo wyraźnie dłuższej (odkrycie krótszej).
-    static func wartoPlan(_ t1: Int, _ n1: Int) -> Bool { t1 <= n1 || Double(t1) >= Double(n1) * 1.5 && t1 - n1 >= 4 }
-
     func wygrana(planyIle: Int = 0) {
-        let etapPoziomu = lab.etap
         lab.trudnosc = nastepnaTrudnosc(planyIle: planyIle)
         faza = .koniec
         trzymane.removeAll()
         droga = nil
         if kot.cel < 0 { kot.cel = osiol.pole == kot.pole ? -1 : kot.pole }
-        porownanie = nil
-        if lab.trybGry == .zwykly && etapPoziomu >= 2 && trasaKot > 1 {
-            let twoja = Array(trasa.prefix(trasaKot))
-            let najkrotsza = lab.najkrotszaDroga(do: lab.kotekI)
-            if Rozgrywka.wartoPlan(twoja.count - 1, najkrotsza.count - 1) { porownanie = Porownanie(twoja: twoja, najkrotsza: najkrotsza) }
-        }
         naZdarzenie?(.wygrana)
     }
 }
@@ -299,7 +286,6 @@ extension Rozgrywka {
         slady = slady.map { Slad(i: t($0.i), k: $0.k) }
         // Kąt łapki po odbiciu: atan2 z zamienionymi osiami.
         droga = droga?.map { LapkaPodp(i: t($0.i), kat: 3 * .pi / 2 - $0.kat) }
-        if let p = porownanie { porownanie = Porownanie(twoja: p.twoja.map(t), najkrotsza: p.najkrotsza.map(t)) }
         podp.cel = -1
         geo = nil
         lab.wersja += 1

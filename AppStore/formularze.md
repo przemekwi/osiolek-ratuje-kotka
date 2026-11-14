@@ -36,6 +36,10 @@ Wklej po angielsku:
 > (default 30 min, at most 60). To see the break screen quickly, a debug-only launch argument exists, but it is
 > not active in release builds.
 >
+> Adult mode: parents who want to play longer themselves can turn off the time limits until midnight
+> (Parent settings → "Adult mode"), behind a second, harder parental gate (e.g. "17 × 8") and a warning.
+> It switches itself off at midnight.
+>
 > No login is required.
 
 Konto demo: niepotrzebne (brak logowania).

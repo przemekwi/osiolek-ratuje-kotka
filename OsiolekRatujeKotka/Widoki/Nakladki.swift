@@ -149,14 +149,11 @@ struct Brawo: View {
     }
 
     private var obraz: some View {
-        ObrazBrawo(ciemny: schemat == .dark)
-            .accessibilityLabel(stan.wynikDrogi ?? "")
-            .accessibilityHidden(stan.wynikDrogi == nil)
+        ObrazBrawo().accessibilityHidden(true)
     }
 
     @ViewBuilder private var opis: some View {
             Text(stan.wynikPodp).font(.kreda(poziomo ? 15 : 18, gruby: false)).multilineTextAlignment(.center)
-            if let d = stan.wynikDrogi { Text(d).font(.kreda(poziomo ? 15 : 18, gruby: false)).multilineTextAlignment(.center) }
             NowaNaklejka()
             Rzad {
                 Button(stan.t("nastepny")) { stan.nastepnyPoziom() }.buttonStyle(.kreska)
@@ -168,36 +165,13 @@ struct Brawo: View {
     }
 }
 
-/// Obrazek na „Brawo”: osiołek z kotkiem przy domku albo plan z drogą dziecka i najkrótszą drogą (`rysujBrawo`).
+/// Obrazek na „Brawo”: osiołek z kotkiem przy domku (`rysujBrawo`).
 struct ObrazBrawo: View {
     @Environment(StanGry.self) private var stan
-    let ciemny: Bool
 
     var body: some View {
         Canvas { g, size in
-            let c = Plotno(g), w = size.width, h = size.height, gra = stan.gra, lab = gra.lab
-            if let p = gra.porownanie {
-                let S = Geometria(TW: lab.TW, TH: lab.TH, szer: w, wys: h), x0 = (w - S.W) / 2, y0 = (h - S.H) / 2
-                c.save(); c.translate(x0, y0)
-                rysujTlo(c, lab, S, Paleta(ciemna: ciemny))
-                let C = S.C
-                func sx(_ q: Int) -> Double { S.sx(Double(lab.ix(q))) }
-                func sy(_ q: Int) -> Double { S.sy(Double(lab.iy(q))) }
-                c.strokeStyle = Color(hex: "#3f6fb5"); c.lineWidth = max(2, C * 0.12); c.lineCap = .round
-                c.lineDash = [C * 0.25, C * 0.22]
-                c.beginPath()
-                for (i, q) in p.najkrotsza.enumerated() { if i == 0 { c.moveTo(sx(q), sy(q)) } else { c.lineTo(sx(q), sy(q)) } }
-                c.stroke(); c.lineDash = []
-                var byly = Set<Int>()
-                for (i, q) in p.twoja.enumerated() where i + 1 < p.twoja.count && !byly.contains(q) {
-                    byly.insert(q)
-                    let n = p.twoja[i + 1]
-                    lapka(c, sx(q), sy(q), C * 0.16, atan2(Double(lab.iy(n) - lab.iy(q)), Double(lab.ix(n) - lab.ix(q))) + .pi / 2, kolorK("lapka"))
-                }
-                rysujKotka(c, sx(lab.kotekI) - C * 0.5, sy(lab.kotekI) - C * 0.38, C, C * 0.75)
-                c.restore()
-                return
-            }
+            let c = Plotno(g), w = size.width, h = size.height
             wpisz(c, SCENA_RAMKA, w * 0.44, 0, w * 0.56, h) { c2, s in rysujScene(c2, s) }
             rysujOsiolka(c, 0, h * 0.18, w * 0.26, h * 0.82, stan.koszulka)
             rysujKotka(c, w * 0.22, h * 0.6, w * 0.24, h * 0.4)
