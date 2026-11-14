@@ -20,6 +20,18 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 Poza zakresem (decyzja właściciela): gra „Osiołek rozsypał karty” (osobna gra), udostępnianie i linki do witryny,
 instalacja PWA, pełny ekran, zdjęcia rysunków.
 
+## Plan
+
+**Wersja 1.0 (przed wydaniem):**
+- Dostęp z przewodnikiem: wskazówka dla rodzica w „Dla rodzica”, jak zablokować telefon w grze (funkcja iOS).
+- Lepsze wibracje: przy zebraniu przedmiotu, radość przy kotku i nowej naklejce, wyłącznik w ustawieniach.
+- Przygotowanie do App Store: manifest prywatności, klasyfikacja wieku, opis i zrzuty ekranu, polityka prywatności.
+
+**Później (1.1 i dalej):** tryb „Zaplanuj drogę z robotem”, kontroler do gier, widżet na ekran główny,
+strzałki po lewej albo prawej stronie, przycisk „Oceń grę” w „Dla rodzica” (za bramką, po wydaniu).
+
+**Świadomie bez:** powiadomień, rankingów i Game Center, reklam, zakupów, analityki, aparatu, mikrofonu, lokalizacji.
+
 ## Uruchomienie w Xcode
 
 1. Xcode 16 albo nowszy (projekt używa folderów synchronizowanych), iOS/iPadOS 18 lub nowszy.
