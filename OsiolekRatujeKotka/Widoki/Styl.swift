@@ -99,10 +99,11 @@ extension ButtonStyle where Self == PrzyciskKreska {
 struct Panel<Tresc: View>: View {
     /// 640 pt jak w grze; na telefonie poziomo szerzej (920 pt), bo treść stoi w dwóch kolumnach.
     var maksSzerokosc: CGFloat = 640
+    var odstepPoziomy: CGFloat = 20
     @ViewBuilder var tresc: Tresc
     var body: some View {
         VStack(spacing: 12) { tresc }
-            .padding(.horizontal, 20).padding(.vertical, maksSzerokosc > 640 ? 10 : 18)
+            .padding(.horizontal, odstepPoziomy).padding(.vertical, maksSzerokosc > 640 ? 10 : 18)
             .frame(maxWidth: maksSzerokosc)
             .kreska(Kolory.karta)
             .background(KsztaltKreski().fill(Kolory.cien).offset(x: 4, y: 5))
