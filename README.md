@@ -99,7 +99,7 @@ Limit czasu dla dzieci 4–8 lat (rozbudowany względem strony; zasady ustalone 
 - 2 minuty przed końcem dymek „Jeszcze chwilka, potem przerwa”; gra kończy się po bieżącym labiryncie,
   najpóźniej 2 minuty po czasie;
 - po sesji przerwa co najmniej 30 minut, potem dziecko gra dalej samo; po limicie dziennym — do jutra;
-- przedłużenia tylko za bramką rodzica (mnożenie, np. „Ile to 7 × 8?”, i cztery odpowiedzi do wyboru),
+- przedłużenia tylko za bramką rodzica (mnożenie z tabliczki, np. „Ile to 7 × 8?”, odpowiedź wpisana cyframi),
   coraz krótsze (10 albo 5, potem 5 albo 3), najwyżej dwa dziennie;
 - licznik przetrwa zamknięcie aplikacji; pół godziny z zamkniętą aplikacją liczy się jako przerwa po sesji.
 

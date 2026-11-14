@@ -11,7 +11,7 @@ enum KrokLimitu: Equatable { case nic, ostrzezenie, dokonczLabirynt, przerwa }
 ///   niż 60 — zalecenie WHO i Amerykańskiej Akademii Pediatrii dla małych dzieci to najwyżej godzina ekranu dziennie);
 /// - 2 minuty przed końcem łagodne ostrzeżenie; gra kończy się po bieżącym labiryncie, najpóźniej 2 minuty po czasie;
 /// - po sesji przerwa co najmniej 30 minut, potem dziecko gra dalej samo; po limicie dziennym — do następnego dnia;
-/// - przedłużenia wybiera rodzic za bramką (mnożenie z czterema odpowiedziami), coraz krótsze, najwyżej dwa dziennie.
+/// - przedłużenia wybiera rodzic za bramką (mnożenie z tabliczki, odpowiedź wpisana cyframi), coraz krótsze, najwyżej dwa dziennie.
 /// Stan jest zapisywany, więc ponowne uruchomienie aplikacji nie omija przerwy.
 struct Limit: Codable, Equatable {
     static let OPCJE_SESJI = [10, 15, 20, 30]
@@ -67,16 +67,6 @@ struct Limit: Codable, Equatable {
     var zostalo: Double { min(limitSesji - sesja, zostaloDnia) }
     var czasMinal: Bool { blokada == .brak && zostalo <= 0 }
     var odpowiedz: Int { a * b }
-
-    /// Cztery odpowiedzi do wyboru: dobra i trzy bliskie (sąsiednie iloczyny), w losowej kolejności.
-    func opcje(_ los: inout Los) -> [Int] {
-        var w = [odpowiedz]
-        for k in los.tasuj([a, b, -a, -b, 1, -1, 10, -10]) where w.count < 4 {
-            let x = odpowiedz + k
-            if x > 0 && !w.contains(x) { w.append(x) }
-        }
-        return los.tasuj(w)
-    }
 
     static func kluczDnia(_ data: Date) -> String {
         let c = Calendar.current.dateComponents([.year, .month, .day], from: data)

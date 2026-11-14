@@ -1,30 +1,38 @@
 import SwiftUI
 
-/// Bramka rodzica (zalecana przez Apple w kategorii dla dzieci): mnożenie i cztery odpowiedzi do wyboru,
-/// bez klawiatury. Przy błędzie nowe działanie.
+/// Bramka rodzica (wymóg Apple w kategorii dla dzieci): działanie z tabliczki mnożenia, np. „Ile to 7 × 8?”,
+/// bez podpowiedzi. Odpowiedź wpisuje się na klawiaturze cyfr w grze (bez klawiatury systemowej). Przy błędzie nowe działanie.
 struct BramkaRodzica: View {
     @Environment(StanGry.self) private var stan
     let otwarta: () -> Void
+    @State private var wpisane = ""
     @State private var blad = false
 
     var body: some View {
         VStack(spacing: 8) {
             Text(stan.t("rodzicMnozenie")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
             Text(stan.pytanieRodzica).font(.kreda(24)).multilineTextAlignment(.center)
-            Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-                ForEach(0..<2, id: \.self) { rz in
-                    GridRow {
-                        ForEach(0..<2, id: \.self) { k in
-                            let i = rz * 2 + k
-                            if i < stan.opcjeBramki.count {
-                                let o = stan.opcjeBramki[i]
-                                Button {
-                                    if stan.odblokuj(o) { blad = false; otwarta() } else { blad = true }
-                                } label: { Text("\(o)").frame(minWidth: 70) }
-                                .buttonStyle(.kreska(Kolory.karta))
-                            }
-                        }
+            Text(wpisane.isEmpty ? " " : wpisane)
+                .font(.kreda(28)).monospacedDigit()
+                .frame(width: 120, height: 48)
+                .kreska(Kolory.karta)
+                .accessibilityLabel(stan.pytanieRodzica)
+                .accessibilityValue(wpisane)
+            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                ForEach([[1, 2, 3], [4, 5, 6], [7, 8, 9]], id: \.self) { rz in
+                    GridRow { ForEach(rz, id: \.self) { cyfra($0) } }
+                }
+                GridRow {
+                    Button { stan.klik(); if !wpisane.isEmpty { wpisane.removeLast() } } label: {
+                        Image(systemName: "delete.left").frame(width: 44, height: 30)
                     }
+                    .buttonStyle(.kreska(Kolory.karta, maly: true))
+                    .accessibilityLabel(stan.t("cofnijCyfre"))
+                    cyfra(0)
+                    Button(action: sprawdz) { Text("OK").frame(width: 44, height: 30) }
+                        .buttonStyle(.kreska(Kolory.zielony, maly: true))
+                        .disabled(wpisane.isEmpty)
+                        .accessibilityLabel(stan.t("odblokuj"))
                 }
             }
             if blad { Text(stan.t("rodzicBlad")).font(.kreda(15, gruby: false)).foregroundStyle(Kolory.ciche) }
@@ -32,6 +40,19 @@ struct BramkaRodzica: View {
         .padding(12)
         .frame(maxWidth: .infinity)
         .kreska(Color.clear)
+    }
+
+    private func cyfra(_ c: Int) -> some View {
+        Button {
+            stan.klik()
+            if wpisane.count < 3 { wpisane += String(c) }
+        } label: { Text("\(c)").frame(width: 44, height: 30) }
+        .buttonStyle(.kreska(Kolory.karta, maly: true))
+    }
+
+    private func sprawdz() {
+        if stan.odblokuj(Int(wpisane)) { blad = false; otwarta() } else { blad = true }
+        wpisane = ""
     }
 }
 
@@ -168,6 +189,7 @@ struct OknoRodzica: View {
     @State private var otwarta = false
     @State private var oGrze = false
     @State private var potwierdzNowa = false
+    @State private var ustawieniaOtwarte = false
 
     var body: some View {
         ZStack {
@@ -175,9 +197,18 @@ struct OknoRodzica: View {
             ScrollView {
                 Panel {
                     Text(stan.t("dlaRodzica")).font(.kreda(28)).foregroundStyle(Kolory.tekst).accessibilityAddTraits(.isHeader)
+                    // „O grze” osobno, bez bramki (linki w środku i tak otwierają się dopiero po bramce).
+                    Button(stan.t("oGrze")) { stan.klik(); oGrze = true }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
                     if otwarta {
                         UstawieniaLimitu()
-                        ustawieniaGry
+                        // Ustawienia gry rozwijane przyciskiem, żeby za bramką nie było od razu wszystkiego naraz.
+                        Button(stan.t("ustawieniaGry")) {
+                            stan.klik()
+                            withAnimation(.easeInOut(duration: 0.2)) { ustawieniaOtwarte.toggle() }
+                        }
+                        .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+                        .accessibilityAddTraits(ustawieniaOtwarte ? .isSelected : [])
+                        if ustawieniaOtwarte { ustawieniaGry }
                     } else {
                         BramkaRodzica { otwarta = true }
                     }
@@ -193,16 +224,14 @@ struct OknoRodzica: View {
         .onAppear { stan.nowaBramka() }
     }
 
-    /// Ustawienia gry w jednym miejscu: dźwięk, kolory, język, „O grze” i nowa gra (kasuje postęp i album).
+    /// Ustawienia gry w jednym miejscu: dźwięk, kolory, język i nowa gra (kasuje postęp i album).
     private var ustawieniaGry: some View {
         VStack(spacing: 10) {
-            Text(stan.t("ustawieniaGry")).font(.kreda(20))
             PrzelacznikiDzwieku()
             Rzad {
                 PrzelacznikMotywu()
                 WyborJezyka()
             }
-            Button(stan.t("oGrze")) { stan.klik(); oGrze = true }.buttonStyle(.kreska(Kolory.rozowy, maly: true))
             if potwierdzNowa {
                 Text(stan.t("nowaGraPotwierdz")).font(.kreda(15, gruby: false)).multilineTextAlignment(.center)
                 Rzad {

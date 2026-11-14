@@ -30,7 +30,7 @@ Wklej po angielsku:
 >
 > Parental gate: links to the author's websites (About → gry.wilde.pl / przemyslaw.wilde.pl), the parent
 > settings (start screen → "Dla rodzica" / "For parents") and time-limit extensions are behind a parental gate:
-> a multiplication question (for example "What is 7 × 8?") with four answer buttons.
+> a multiplication question (for example "What is 7 × 8?"); the answer is typed on an in-app number pad.
 >
 > Time limits: the game pauses after a play session (default 15 min) and stops after the daily limit
 > (default 30 min, at most 60). To see the break screen quickly, a debug-only launch argument exists, but it is

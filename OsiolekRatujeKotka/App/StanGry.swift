@@ -26,9 +26,6 @@ final class StanGry {
     private(set) var przerwaTrwa = false
     private(set) var blokada: Blokada = .brak
     private(set) var pytanieRodzica = ""
-    /// Cztery odpowiedzi do wyboru w bramce rodzica.
-    private(set) var opcjeBramki: [Int] = []
-    @ObservationIgnored private var ostatniaBramka = (0, 0)
     /// Po 30 minutach przerwy dziecko może samo grać dalej.
     private(set) var przerwaMinela = false
     /// Licznik ostrzeżeń „Jeszcze chwilka, potem przerwa” — pokazuje dymek nad planszą.
@@ -169,7 +166,7 @@ final class StanGry {
     }
 
     /// Odpowiedź rodzica na działanie; przy błędzie nowe działanie.
-    func odblokuj(_ odpowiedz: Int) -> Bool {
+    func odblokuj(_ odpowiedz: Int?) -> Bool {
         if limit.sprawdz(odpowiedz) { klik(); return true }
         limit.nowePytanie(&gra.lab.los)
         odswiezPrzerwe()
@@ -206,10 +203,7 @@ final class StanGry {
         if przerwaTrwa != limit.zablokowana { przerwaTrwa = limit.zablokowana }
         if blokada != limit.blokada { blokada = limit.blokada }
         pytanieRodzica = t("ileTo", ["s": "\(limit.a) × \(limit.b)"])
-        if (limit.a, limit.b) != ostatniaBramka {
-            ostatniaBramka = (limit.a, limit.b)
-            opcjeBramki = limit.opcje(&gra.lab.los)
-        }
+
         przerwaMinela = limit.przerwaMinela(teraz: Date().timeIntervalSince1970)
     }
 
