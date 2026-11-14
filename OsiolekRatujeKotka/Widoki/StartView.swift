@@ -41,7 +41,7 @@ struct StartView: View {
                             OknoAlbumu(rozmiarEkranu: geo.size) { album = false }.frame(maxWidth: .infinity)
                         }
                         .scrollBounceBehavior(.basedOnSize)
-                        .defaultScrollAnchor(.center)
+                        .defaultScrollAnchor(.center, for: .alignment)
                     }
                 }
             }

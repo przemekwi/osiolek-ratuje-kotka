@@ -198,7 +198,7 @@ struct PrzerwaView: View {
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize)
-            .defaultScrollAnchor(.center)
+            .defaultScrollAnchor(.center, for: .alignment)
         }
         .task {
             // Co kilka sekund: czy przerwa już minęła albo zaczął się nowy dzień.
@@ -281,7 +281,7 @@ struct OknoRodzica: View {
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize)
-            .defaultScrollAnchor(.center)
+            .defaultScrollAnchor(.center, for: .alignment)
         }
         .overlay { if oGrze { OGrzeView { oGrze = false } } }
         .onAppear { stan.nowaBramka() }
