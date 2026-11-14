@@ -33,8 +33,12 @@ struct GraView: View {
         .defersSystemGestures(on: .all)
         .overlay { NakladkiGry() }
         .background(KlawiaturaSprzetowa { klawisz, wcisniety in obsluzKlawisz(klawisz, wcisniety) })
-        .sensoryFeedback(.impact(weight: .light), trigger: stan.uderzenia)
-        .sensoryFeedback(.success, trigger: stan.spotkania)
+        // Wibracje (wyłączane w „Dla rodzica”): ściana — lekkie stuknięcie, przedmiot — miękkie,
+        // kotek — sukces, nowa naklejka na „Brawo” — mocniejsze stuknięcie.
+        .sensoryFeedback(trigger: stan.uderzenia) { _, _ in stan.wibracje ? .impact(weight: .light, intensity: 0.7) : nil }
+        .sensoryFeedback(trigger: stan.zebrania) { _, _ in stan.wibracje ? .impact(flexibility: .soft, intensity: 0.8) : nil }
+        .sensoryFeedback(trigger: stan.spotkania) { _, _ in stan.wibracje ? .success : nil }
+        .sensoryFeedback(trigger: stan.naklejki) { _, _ in stan.wibracje ? .impact(weight: .heavy) : nil }
         .onAppear { stan.gra.ograniczonyRuch = ograniczRuch }
         .onChange(of: ograniczRuch) { _, n in stan.gra.ograniczonyRuch = n }
         .accessibilityElement(children: .contain)

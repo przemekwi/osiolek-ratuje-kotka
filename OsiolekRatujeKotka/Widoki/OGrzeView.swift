@@ -29,12 +29,16 @@ struct OGrzeView: View {
                     .frame(maxWidth: 420).frame(height: 120)
                     .accessibilityHidden(true)
 
+                    Text(stan.t("oKrotko")).font(.kreda(16, gruby: false)).multilineTextAlignment(.center)
                     wizytowka
-                    opisGry
                     rysunki
 
-                    Text(Teksty.surowy(stan.jezyk, "o")[10].napis)
-                        .font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
+                    // Przy innych językach niż polski krótka informacja, że tłumaczenie jest maszynowe.
+                    if !pl {
+                        Text(Teksty.surowy(stan.jezyk, "o")[8].napis)
+                            .font(.kreda(12, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
+                    }
+                    Text("© 2026 Przemysław Wilde").font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche)
                     Button(stan.t("wroc")) { stan.klik(); zamknij() }.buttonStyle(.kreska)
                 }
                 .foregroundStyle(Kolory.tekst)
@@ -94,20 +98,6 @@ struct OGrzeView: View {
             }
             .foregroundStyle(Kolory.tekst)
         }
-    }
-
-    // MARK: Opis gry
-    private var opisGry: some View {
-        let o = Teksty.surowy(stan.jezyk, "o")
-        // Akapity ze strony, które pasują do aplikacji (0 — rysunki, 3 — labirynt, 8 — tłumaczenia),
-        // i akapity aplikacji tam, gdzie działa inaczej niż strona (album, dźwięk, prywatność, limit czasu).
-        let akapity = [o[0].napis, o[3].napis, stan.t("oAlbum"), stan.t("oAplikacja"), stan.t("oLimit"), stan.t("oPrywatnosc"), o[8].napis]
-        return VStack(alignment: .leading, spacing: 8) {
-            ForEach(akapity.indices, id: \.self) { i in
-                Text(akapity[i]).font(.kreda(15, gruby: false)).fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Rysunki dziecka (jak „pary” w grze, bez zdjęć kartek)

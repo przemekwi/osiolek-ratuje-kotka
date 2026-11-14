@@ -50,6 +50,17 @@ struct UstawieniaLimitu: View {
             wybor(Limit.OPCJE_DNIA, l.dzienMin) { stan.ustawLimit(sesja: stan.limit.sesjaMin, dzien: $0) }
             Text(stan.t("dzisGra", ["m": Int(l.dzisiaj / 60), "d": l.dzienMin])).font(.kreda(16, gruby: false))
             Text(stan.t("przerwaPoSesji")).font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
+            Button(stan.t(stan.wibracje ? "wibracjeWl" : "wibracjeWyl")) { stan.przelaczWibracje() }
+                .buttonStyle(.kreska(Kolory.niebieski, maly: true))
+                .accessibilityAddTraits(stan.wibracje ? .isSelected : [])
+            // Dostęp z przewodnikiem: funkcja iOS, która zatrzymuje telefon w jednej aplikacji.
+            VStack(spacing: 4) {
+                Text(stan.t("przewodnikH")).font(.kreda(16))
+                Text(stan.t("przewodnikKroki")).font(.kreda(14, gruby: false)).multilineTextAlignment(.center)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            .kreska(Kolory.tlo)
             Text(stan.t("systemInfo")).font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
         }
         .padding(12)

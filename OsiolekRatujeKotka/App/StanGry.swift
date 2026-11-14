@@ -53,6 +53,14 @@ final class StanGry {
     private(set) var podpGotowa = 0
     var muzyka = true { didSet { Syntezator.wspolny.muzyka = muzyka; if muzyka && ekran == .gra { Syntezator.wspolny.wlaczMuzyke() } } }
     var dzwieki = true { didSet { Syntezator.wspolny.dzwieki = dzwieki } }
+    /// Wibracje włączone (wyłącznik w „Dla rodzica”).
+    private(set) var wibracje = true
+    /// Liczniki zdarzeń, które wyzwalają wibracje: zebrany przedmiot albo serduszko, nowa naklejka na „Brawo”.
+    private(set) var zebrania = 0
+    private(set) var naklejki = 0
+
+    func przelaczWibracje() { klik(); wibracje.toggle(); zapisz() }
+
     /// Panel strzałek ukryty: plansza dostaje jego miejsce (sterowanie palcem i klawiaturą zostaje).
     private(set) var strzalkiUkryte = false
 
@@ -91,7 +99,7 @@ final class StanGry {
         var z = Zapis()
         z.zapisano = Date().timeIntervalSince1970
         // Język zapisany tylko, gdy różni się od systemowego: inaczej gra idzie za językiem urządzenia.
-        z.jezyk = jezyk == Teksty.jezykUrzadzenia() ? nil : jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki; z.strzalkiUkryte = strzalkiUkryte; z.krzakWyjasniony = krzakWyjasniony
+        z.jezyk = jezyk == Teksty.jezykUrzadzenia() ? nil : jezyk; z.motyw = motyw.rawValue; z.muzyka = muzyka; z.dzwieki = dzwieki; z.strzalkiUkryte = strzalkiUkryte; z.wibracje = wibracje; z.krzakWyjasniony = krzakWyjasniony
         z.koszulkaIndeks = koszulkaIndeks; z.kolorKoszulki = kolorKoszulki
         z.album = album; z.limit = limit
         z.poziom = poziom; z.trudnosc = gra.lab.trudnosc; z.pomocZRzedu = gra.lab.pomocZRzedu
@@ -107,7 +115,7 @@ final class StanGry {
               let z = try? JSONDecoder().decode(Zapis.self, from: dane) else { return }
         if let j = z.jezyk, Teksty.jezyki.contains(j) { jezyk = j }
         if let m = z.motyw, let w = WyborMotywu(rawValue: m) { motyw = w }
-        muzyka = z.muzyka; dzwieki = z.dzwieki; strzalkiUkryte = z.strzalkiUkryte ?? false; krzakWyjasniony = z.krzakWyjasniony ?? false
+        muzyka = z.muzyka; dzwieki = z.dzwieki; strzalkiUkryte = z.strzalkiUkryte ?? false; wibracje = z.wibracje ?? true; krzakWyjasniony = z.krzakWyjasniony ?? false
         koszulkaIndeks = z.koszulkaIndeks.flatMap { Koszulka.wszystkie.indices.contains($0) ? $0 : nil }
         kolorKoszulki = z.kolorKoszulki
         album = z.album
@@ -402,7 +410,7 @@ final class StanGry {
         gra.tik(min(0.05, dt))
         if brawoZa > 0 {
             brawoZa -= dt
-            if brawoZa <= 0 { nakladka = .brawo }
+            if brawoZa <= 0 { nakladka = .brawo; naklejki += 1 }
         }
         let s = Int(gra.czas)
         if s != sekunda { sekunda = s }
@@ -427,10 +435,12 @@ final class StanGry {
         case .krokRuchu: dzwiek.krokRuchu()
         case .radosc: dzwiek.radosc()
         case .serce:
+            zebrania += 1
             dzwiek.serce()
             zebrane = gra.zebrane
             komunikat = gra.serca.isEmpty ? t("wszystkoPowiedz") : t("zebranePowiedz", ["z": gra.serca.count])
         case .krzakZnika:
+            zebrania += 1
             dzwiek.radosc()
             komunikat = t("krzakZnika")
         case .kotekZnaleziony:
