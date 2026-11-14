@@ -49,12 +49,14 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
 - Konto Apple Developer: Individual / Sole Proprietor (w sklepie widoczne imię i nazwisko).
 
 ## Stan (14.11.2026)
+- Wersja 2.0: tryb „Zaplanuj drogę z robotem” przeniesiony z gry webowej (`Logika/Plan.swift`, `SterowaniePlanu`
+  w `GraView.swift`, testy `PlanTests`); nie był jeszcze budowany w Xcode (⌘U: oczekiwane 30 testów).
 - Wersja 1.0 gotowa w kodzie; pull request: przemekwi/osiolek-ratuje-kotka#1
   (`claude/relaxed-mayer-bdg0iv` → `main`). Ostatnie zmiany (bramka z klawiaturą, nowe „O grze”,
   tryb dla dorosłych, usunięcie porównania drogi, nowy identyfikator) nie były jeszcze budowane przez właściciela.
 
 ## Następne kroki
-1. Właściciel: Pull, wybór zespołu w Signing & Capabilities (nowy identyfikator), ⌘U (oczekiwane 24 testy),
+1. Właściciel: Pull, wybór zespołu w Signing & Capabilities (nowy identyfikator), ⌘U (oczekiwane 30 testów),
    test na iPhonie i z córką; poprawki zgłaszane zrzutami.
 2. Scalenie PR #1 do `main` (decyzja właściciela).
 3. Formalności: konto Apple Developer (opłata), konsultacja statusu przedsiębiorcy w UE (DSA) z księgową,
@@ -64,5 +66,5 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
    z `AppStore/` (klasyfikacja 4+, Dla dzieci 6–8 lat, „Brak gromadzenia danych”).
 5. Wysyłka: App Store Connect → nowa aplikacja → Xcode Archive → TestFlight (rodzina) → przegląd.
    Dostępność: najpierw Polska, po 1–2 tygodniach cały świat bez Chin kontynentalnych (licencja na gry).
-6. Wersja 1.1: tryb „Zaplanuj drogę z robotem” (z gry webowej), kontroler do gier, widżet, wybór strony
+6. Dalej: kontroler do gier, widżet, wybór strony
    strzałek, przycisk „Oceń grę” za bramką (po publikacji, wymaga identyfikatora aplikacji w App Store).

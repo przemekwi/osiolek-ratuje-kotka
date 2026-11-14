@@ -38,7 +38,8 @@ extension Rozgrywka {
         return lab.trybGry == .plan || faza == .szukaj ? lab.kotekI : lab.domI
     }
 
-    var polePodp: Int { osiol.cel >= 0 ? osiol.cel : osiol.pole }
+    /// W trybie z robotem, gdy dziecko układa plan, liczy się koniec planu.
+    var polePodp: Int { lab.trybGry == .plan && plan.wyk < 0 ? plan.koniec : osiol.cel >= 0 ? osiol.cel : osiol.pole }
 
     /// Ile sekund do podpowiedzi (0 — gotowa) i jaka część odliczania minęła (pasek na przycisku).
     var podpZostalo: Int { max(0, Int((podp.gotowa - podp.t).rounded(.up))) }
@@ -63,7 +64,8 @@ extension Rozgrywka {
     func pokazDroge() -> WynikPodp? {
         guard wGrze else { return nil }
         if podp.t < podp.gotowa { return .zaWczesnie(podpZostalo) }
-        let start = polePodp, d = lab.bfs(celPodp)
+        let wPlanie = planuje
+        let start = wPlanie ? plan.koniec : osiol.cel >= 0 ? osiol.cel : osiol.pole, d = lab.bfs(celPodp)
         var pelna = [start]
         var cur = start
         while d[cur] > 0 && pelna.count < lab.TW * lab.TH {
@@ -72,11 +74,20 @@ extension Rozgrywka {
             cur = nast
             if lab.jestPolem(cur) { pelna.append(cur) }
         }
-        let stopien = min(3, podp.stopien + 1)
-        var rozwidlenia: [Int] = []
-        if pelna.count > 2 { for i in 1..<(pelna.count - 1) where lab.otwarte(pelna[i]) >= 3 { rozwidlenia.append(i) } }
-        var ile = stopien == 1 ? 1 : rozwidlenia.count >= stopien - 1 ? rozwidlenia[stopien - 2] + 1 : 3
-        ile = max(1, min(ile, stopien == 2 ? 5 : 8, pelna.count - 2))
+        let stopien: Int
+        var ile: Int
+        if wPlanie {
+            // W trybie z robotem podpowiedź pokazuje tylko następny korytarz.
+            stopien = 1
+            let k = pelna.count > 1 ? (0..<4).first { pelna[1] == start + 2 * (DX[$0] + DY[$0] * lab.TW) } : nil
+            ile = k.map { korytarz(start, $0).count } ?? 1
+        } else {
+            stopien = min(3, podp.stopien + 1)
+            var rozwidlenia: [Int] = []
+            if pelna.count > 2 { for i in 1..<(pelna.count - 1) where lab.otwarte(pelna[i]) >= 3 { rozwidlenia.append(i) } }
+            ile = stopien == 1 ? 1 : rozwidlenia.count >= stopien - 1 ? rozwidlenia[stopien - 2] + 1 : 3
+            ile = max(1, min(ile, stopien == 2 ? 5 : 8, pelna.count - 2))
+        }
         var lapki: [LapkaPodp] = []
         for n in 0..<ile where n + 1 < pelna.count {
             let a = pelna[n], b = pelna[n + 1]
@@ -88,6 +99,7 @@ extension Rozgrywka {
         podp.stopien = stopien; podp.maks = max(podp.maks, stopien)
         podp.od = podp.t; podp.postep = podp.t
         podp.gotowa = podp.t + (podp.t > podp.oczekiwany ? 10 : 25)
+        if wPlanie { mowRobot("robotPodp") }
         return .pokazana
     }
 }

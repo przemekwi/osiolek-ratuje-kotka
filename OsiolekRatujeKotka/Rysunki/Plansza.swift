@@ -208,6 +208,10 @@ func rysujPlansze(_ c: Plotno, _ gra: Rozgrywka, _ S: Geometria, _ P_: Paleta, t
             lapka(c, sx(Double(lab.ix(l.i))), sy(Double(lab.iy(l.i))), C * 0.2 * f, l.kat, P_.lapka)
         }
     }
+    // Plan robota: niebieskie łapki (ruch w ścianę nie ma łapek), koniec każdego ruchu większy, koniec planu największy.
+    if lab.trybGry == .plan {
+        for l in gra.lapkiPlanu() { lapka(c, sx(Double(lab.ix(l.i))), sy(Double(lab.iy(l.i))), C * l.r, l.kat, kolorK("plan")) }
+    }
     if r <= 0 { postac(c, "kotek", kx, ky, C * 1.1, C * 0.82, ciemny: ciemny) { c2, x, y, w, h in rysujKotka(c2, x, y, w, h) } }
     let drgnij = gra.bum > 0 ? sin(gra.bum * 60) * C * 0.05 : 0
     let podskok = gra.osiol.cel >= 0 && ruch ? abs(sin(t * 14)) * C * 0.06 : 0

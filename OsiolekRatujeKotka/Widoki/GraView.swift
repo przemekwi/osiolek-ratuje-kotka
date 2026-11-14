@@ -10,18 +10,29 @@ struct GraView: View {
     var body: some View {
         GeometryReader { geo in
             let bok = geo.size.width > geo.size.height && geo.size.height <= 700
+            // Tryb z robotem ma więcej przycisków: na szerokim ekranie poziomo (iPad) stoją obok planszy,
+            // żeby jej nie pomniejszać; na niskim ekranie pionowo (mały iPhone) są ciaśniej.
+            let planObok = stan.trybPlan && geo.size.width > geo.size.height && geo.size.width >= 640
             VStack(spacing: 8) {
                 // Układ paska zależy tylko od szerokości ekranu, nie od długości napisów (inaczej odliczanie
                 // podpowiedzi przełączało pasek na dwa wiersze i plansza zmieniała rozmiar).
                 PasekGry(jedenWiersz: geo.size.width >= 680)
-                if bok {
-                    HStack(spacing: 8) {
+                if bok || planObok {
+                    HStack(spacing: bok ? 8 : 16) {
                         PlanszaView(ciemny: schemat == .dark)
-                        if !stan.strzalkiUkryte { Strzalki(kompakt: true).frame(maxWidth: 260).transition(.move(edge: .trailing).combined(with: .opacity)) }
+                        if stan.trybPlan {
+                            SterowaniePlanu(kompakt: bok).frame(maxWidth: bok ? 330 : 320)
+                        } else if !stan.strzalkiUkryte {
+                            Strzalki(kompakt: true).frame(maxWidth: 260).transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
                     }
                 } else {
                     PlanszaView(ciemny: schemat == .dark)
-                    if !stan.strzalkiUkryte { Strzalki().transition(.move(edge: .bottom).combined(with: .opacity)) }
+                    if stan.trybPlan {
+                        SterowaniePlanu(kompakt: geo.size.height < 760)
+                    } else if !stan.strzalkiUkryte {
+                        Strzalki().transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
             }
         }
@@ -45,9 +56,21 @@ struct GraView: View {
     }
 
     /// Klawiatura sprzętowa (iPad, Mac z symulatorem): strzałki i W A S D prowadzą osiołka, P albo Esc — pauza.
+    /// W trybie z robotem strzałka dokłada ruch do planu, Enter to „Idź”, Backspace — „Cofnij ruch”.
     private func obsluzKlawisz(_ klawisz: Klawisz, _ wcisniety: Bool) {
         let gra = stan.gra
+        if stan.trybPlan && klawisz != .pauza {
+            guard wcisniety, gra.wGrze, stan.nakladka == nil else { return }
+            switch klawisz {
+            case .kierunek(let k): stan.dodajKrok(k.rawValue)
+            case .idz: stan.idzPlan()
+            case .cofnij: stan.cofnijKrok()
+            case .pauza: break
+            }
+            return
+        }
         switch klawisz {
+        case .idz, .cofnij: return
         case .pauza:
             guard wcisniety else { return }
             if stan.nakladka == .menu { stan.wznow() } else if gra.wGrze && stan.nakladka == nil { stan.pauza() }
@@ -148,10 +171,14 @@ struct Zbierane: View {
 struct PlanszaView: View {
     @Environment(StanGry.self) private var stan
     let ciemny: Bool
+    /// Tryb z robotem: początek dotyku i liczba ruchów narysowanych palcem (bez ruchów to stuknięcie).
+    @State private var rysowanie: (x: Double, y: Double, ruchy: Int)?
 
     var body: some View {
         GeometryReader { geo in
             let gra = stan.gra
+            // Zmiana planu przerysowuje planszę także wtedy, gdy nic się nie rusza (odświeżanie wstrzymane).
+            let wersjaPlanu = stan.wersjaPlanu
             ZStack {
                 Color.clear
                     .onAppear { stan.ustawRamke(geo.size) }
@@ -165,6 +192,7 @@ struct PlanszaView: View {
                         TimelineView(.animation(minimumInterval: stan.tempo == .wolno ? 1.0 / 30 : nil,
                                                 paused: stan.nakladka != nil || stan.tempo == .stoi)) { tl in
                             Canvas { g, _ in
+                                _ = wersjaPlanu
                                 rysujPlansze(Plotno(g), gra, S, Paleta(ciemna: ciemny),
                                              t: tl.date.timeIntervalSinceReferenceDate, koszulka: stan.koszulka)
                             }
@@ -189,11 +217,24 @@ struct PlanszaView: View {
             .onChanged { v in
                 let gra = stan.gra
                 gra.geo = S
+                if stan.trybPlan {
+                    // Prowadzenie palcem rysuje plan (jak `prowadzPalcem` w grze); samo dotknięcie jeszcze nic nie robi.
+                    guard var r = rysowanie else { rysowanie = (v.startLocation.x, v.startLocation.y, 0); return }
+                    if let c = S.pole(x: v.location.x, y: v.location.y, TW: gra.lab.TW, TH: gra.lab.TH), stan.prowadzPalcem(c) {
+                        r.ruchy += 1; rysowanie = r
+                    }
+                    return
+                }
                 let pierwszy = gra.palec == nil
                 gra.palec = (v.location.x, v.location.y)
                 if pierwszy && stan.nakladka == nil { gra.trzymaj("palec", 0) }
             }
-            .onEnded { _ in
+            .onEnded { v in
+                if let r = rysowanie {
+                    // Krótkie stuknięcie dokłada krok w stronę stuknięcia, licząc od końca planu.
+                    if r.ruchy == 0 && hypot(v.location.x - r.x, v.location.y - r.y) < 12 { stan.krokPalcem(x: v.location.x, y: v.location.y) }
+                    rysowanie = nil
+                }
                 stan.gra.palec = nil
                 stan.gra.pusc("palec")
             }
@@ -221,6 +262,8 @@ struct Strzalki: View {
     @Environment(StanGry.self) private var stan
     /// Niski ekran poziomo: mniejsze przyciski (jak w grze), żeby plansza dostała więcej miejsca.
     var kompakt = false
+    /// Tryb z robotem: dotknięcie strzałki dokłada jeden ruch do planu (bez trzymania); bez wskazówki pod spodem.
+    var plan = false
     /// Kierunek trzymany palcem (podświetla przycisk).
     @State private var wcisniety: Kierunek?
     /// Prostokąty przycisków w układzie krzyżaka (do zamiany punktu dotyku na kierunek).
@@ -244,13 +287,18 @@ struct Strzalki: View {
             .coordinateSpace(.named(przestrzen))
             // Dotyk przez UIKit (touchesBegan/Moved/Ended): bez opóźnienia rozpoznawania gestu SwiftUI;
             // przesunięcie palca na inną strzałkę od razu zmienia kierunek, jak krzyżak w padzie.
-            .overlay { DotykKrzyzaka(ramki: ramki, zmiana: zmienKierunek).accessibilityHidden(true) }
+            .overlay {
+                DotykKrzyzaka(ramki: ramki, zmiana: zmienKierunek, nowy: plan ? { stan.dodajKrok($0.rawValue) } : nil)
+                    .accessibilityHidden(true)
+            }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(stan.t("strzalki"))
-            Text(stan.t("sterDotyk"))
-                .font(.kreda(kompakt ? 12 : 14, gruby: false))
-                .foregroundStyle(Kolory.ciche)
-                .multilineTextAlignment(.center)
+            if !plan {
+                Text(stan.t("sterDotyk"))
+                    .font(.kreda(kompakt ? 12 : 14, gruby: false))
+                    .foregroundStyle(Kolory.ciche)
+                    .multilineTextAlignment(.center)
+            }
         }
         .onDisappear { zmienKierunek(nil) }
     }
@@ -258,6 +306,8 @@ struct Strzalki: View {
     private func zmienKierunek(_ k: Kierunek?) {
         guard k != wcisniety else { return }
         wcisniety = k
+        // W trybie planu tylko podświetlenie; ruch dokłada `nowy` przy dotknięciu.
+        if plan { return }
         if let k, stan.nakladka == nil { stan.gra.trzymaj("przycisk", k.rawValue) } else { stan.gra.pusc("przycisk") }
     }
 
@@ -277,7 +327,8 @@ struct Strzalki: View {
         .accessibilityLabel(napis)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
-            // VoiceOver: jedno stuknięcie to jeden krok.
+            // VoiceOver: jedno stuknięcie to jeden krok (w trybie planu jeden ruch w planie).
+            if plan { stan.dodajKrok(k.rawValue); return }
             stan.gra.trzymaj("przycisk:\(k)", k.rawValue)
             stan.gra.pusc("przycisk:\(k)")
         }
@@ -288,6 +339,8 @@ struct Strzalki: View {
 struct DotykKrzyzaka: UIViewRepresentable {
     let ramki: [Kierunek: CGRect]
     let zmiana: (Kierunek?) -> Void
+    /// Nowy palec na strzałce (tryb z robotem: jeden ruch na jedno dotknięcie, przesunięcie palca nic nie dokłada).
+    var nowy: ((Kierunek) -> Void)?
 
     func makeUIView(context: Context) -> Widok {
         let v = Widok()
@@ -299,11 +352,13 @@ struct DotykKrzyzaka: UIViewRepresentable {
     func updateUIView(_ v: Widok, context: Context) {
         v.ramki = ramki
         v.zmiana = zmiana
+        v.nowy = nowy
     }
 
     final class Widok: UIView {
         var ramki: [Kierunek: CGRect] = [:]
         var zmiana: ((Kierunek?) -> Void)?
+        var nowy: ((Kierunek) -> Void)?
         private var palce: [(UITouch, Kierunek?)] = []
 
         private func kierunek(_ p: CGPoint) -> Kierunek? {
@@ -314,7 +369,11 @@ struct DotykKrzyzaka: UIViewRepresentable {
         private func odswiez() { zmiana?(palce.last(where: { $0.1 != nil })?.1) }
 
         override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-            for t in touches { palce.append((t, kierunek(t.location(in: self)))) }
+            for t in touches {
+                let k = kierunek(t.location(in: self))
+                palce.append((t, k))
+                if let k { nowy?(k) }
+            }
             odswiez()
         }
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -397,5 +456,71 @@ struct DymekOstrzezenia: View {
                 withAnimation(.easeInOut(duration: 0.3)) { widoczny = false }
             }
         }
+    }
+}
+
+/// Sterowanie w trybie „Zaplanuj drogę z robotem” (jak `.plan-panel` w grze): robot z dymkiem, strzałki dokładające
+/// ruchy do planu i przyciski „Idź”, „Cofnij ruch”, „Od nowa”.
+struct SterowaniePlanu: View {
+    @Environment(StanGry.self) private var stan
+    /// Telefon poziomo albo niski ekran: mniejszy robot, dymek i przyciski, żeby plansza dostała więcej miejsca.
+    let kompakt: Bool
+
+    var body: some View {
+        VStack(spacing: kompakt ? 4 : 8) {
+            HStack(spacing: kompakt ? 4 : 8) {
+                RobotObok().frame(width: kompakt ? 42 : 58, height: kompakt ? 46 : 64)
+                DymekRobota(kompakt: kompakt)
+            }
+            Strzalki(kompakt: kompakt, plan: true)
+            HStack(spacing: kompakt ? 4 : 8) {
+                przycisk("planIdz", ikona: "idz", kolor: Kolory.zolty) { stan.idzPlan() }
+                przycisk("planCofnij", ikona: "cofnij", kolor: Kolory.niebieski) { stan.cofnijKrok() }
+                przycisk("planCzysc", ikona: "odnowa", kolor: Kolory.rozowy) { stan.wyczyscPlan() }
+            }
+        }
+        .frame(maxWidth: 420)
+    }
+
+    private func przycisk(_ klucz: String, ikona: String, kolor: Color, _ akcja: @escaping () -> Void) -> some View {
+        Button(action: akcja) {
+            HStack(spacing: 4) {
+                IkonaDziecka(id: ikona).frame(width: kompakt ? 18 : 24, height: kompakt ? 18 : 24)
+                Text(stan.t(klucz)).font(.kreda(kompakt ? 13 : 16)).lineLimit(1).minimumScaleFactor(0.6)
+            }
+        }
+        .buttonStyle(PrzyciskKreska(kolor: kolor, maly: true, ciasny: kompakt))
+    }
+}
+
+/// Robot narysowany przez dziecko, obok dymka.
+struct RobotObok: View {
+    var body: some View {
+        Canvas { g, size in wpisz(Plotno(g), ROBOT_RAMKA, 0, 0, size.width, size.height, rysujRobota) }
+            .accessibilityHidden(true)
+    }
+}
+
+/// Dymek robota ma stałą wysokość (najdłuższy komunikat): zmiana tekstu nie przesuwa planszy ani nie zmienia jej skali.
+struct DymekRobota: View {
+    @Environment(StanGry.self) private var stan
+    let kompakt: Bool
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            ForEach(Rozgrywka.KOMUNIKATY_ROBOTA, id: \.self) { k in
+                Text(stan.t(k, ["n": 99])).hidden()
+            }
+            Text(stan.napisRobota)
+        }
+        .font(.kreda(kompakt ? 13 : 15))
+        .foregroundStyle(Kolory.tekst)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, kompakt ? 8 : 12)
+        .padding(.vertical, kompakt ? 4 : 6)
+        .frame(maxWidth: 300, alignment: .leading)
+        .kreska(Kolory.karta)
+        .accessibilityElement()
+        .accessibilityLabel(stan.napisRobota)
     }
 }

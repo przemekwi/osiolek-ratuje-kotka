@@ -12,7 +12,7 @@ Aplikacja działa w pełni offline: bez internetu, reklam, analityki i logowania
 |---|---|---|
 | 1 | Struktura projektu, generator labiryntu, ruch, kotek, domek, plansza z rysunkami, strzałki, palec, klawiatura, „Brawo” | gotowy, działa w symulatorze (iPhone 17, iOS 26.5) |
 | 2 | Krzaczek i serduszko, przedmioty, podpowiedź stopniowana z odliczaniem, porównanie drogi, dźwięki i muzyka | gotowy |
-| 3 | Tryb „Zaplanuj drogę z robotem” | odłożony |
+| 3 | Tryb „Zaplanuj drogę z robotem” (przeniesiony z gry webowej, wersja 2.0) | gotowy do sprawdzenia |
 | 4 | Ekran startowy, szafa z koszulkami, menu, „O grze” (wizytówka autora) | gotowy do sprawdzenia |
 | 5 | Album naklejek, koniec rozdziału co 5 poziomów, wyjaśnienie krzaczka | gotowy do sprawdzenia |
 | 6 | Limit czasu i przerwa z pytaniem dla rodzica, zapis ostatniego punktu | gotowy do sprawdzenia |
@@ -29,7 +29,7 @@ instalacja PWA, pełny ekran, zdjęcia rysunków.
 - [x] Uporządkowanie menu: dla dziecka start (Graj, Album, Przebierz, Dźwięk) i menu pauzy, ustawienia w „Dla rodzica”.
 - [ ] Zrzuty ekranu, polityka prywatności na witrynie, konto Apple Developer, TestFlight (właściciel).
 
-**Później (1.2 i dalej):** tryb „Zaplanuj drogę z robotem”, kontroler do gier, widżet na ekran główny,
+**Później:** kontroler do gier, widżet na ekran główny,
 strzałki po lewej albo prawej stronie, przycisk „Oceń grę” w „Dla rodzica” (za bramką, po wydaniu).
 
 **Świadomie bez:** powiadomień, rankingów i Game Center, reklam, zakupów, analityki, aparatu, mikrofonu, lokalizacji.
@@ -39,6 +39,14 @@ strzałki po lewej albo prawej stronie, przycisk „Oceń grę” w „Dla rodzi
 Zasada numeracji: nowy tryb albo przebudowa — całość (2.0), większa zmiana — o 0.1, mała zmiana — litera (1.1a).
 W App Store litera to trzecia liczba (1.1a → 1.1.1). Gra webowa na gry.wilde.pl ma ten sam numer.
 
+- **2.0** — nowy tryb „Zaplanuj drogę z robotem”, przeniesiony z gry webowej z tymi samymi zasadami: dziecko układa
+  strzałkami drogę do kotka (jedna strzałka to cały korytarz), osiołek rusza po „Idź”, robot w dymku mówi, ile ruchów
+  jest w planie, a błąd (ruch w ścianę) wychodzi dopiero w trakcie przejścia. Plan widać jako niebieskie łapki;
+  „Cofnij ruch” i „Od nowa”; podpowiedź pokazuje jeden korytarz. Na iPhonie i iPadzie także: rysowanie drogi palcem
+  po planszy i stuknięcie w stronę ruchu, klawiatura sprzętowa (strzałki, Enter — „Idź”, Backspace — „Cofnij ruch”),
+  VoiceOver czyta komunikaty robota, sterowanie obok planszy na iPadzie poziomo i na telefonie poziomo,
+  plan zapisuje się razem z labiryntem. Zmiana trybu (przyciskiem na ekranie startowym) zaczyna grę od poziomu 1,
+  jak w grze webowej; album zostaje.
 - **1.1a** — gra webowa dostała „Nową grę” w menu pauzy (z ostrzeżeniem) i teksty z aplikacji; obie gry znów takie same.
 - **1.1** — „Nowa gra” w menu pauzy z ostrzeżeniem, naklejka na naklejce i większy album na telefonie,
   polityka prywatności; na dalszych poziomach więcej krzaczków (od stopnia 5 jeden, od 9 dwa, od 13 trzy, nigdy więcej),
@@ -79,6 +87,7 @@ OsiolekRatujeKotka/
   App/       OsiolekApp (wejście), StanGry (@Observable: ekrany, nakładki, ustawienia, pętla klatek CADisplayLink)
   Logika/    czysty Swift bez SwiftUI, przeniesiony 1:1 z gry (te same nazwy funkcji):
              Labirynt (budowa planszy, BFS, krzaczek), Rozgrywka (ruch, kotek, wygrana, trudność),
+             Plan (tryb „Zaplanuj drogę z robotem”: korytarze, plan, wykonanie),
              Podpowiedz (podpowiedź stopniowana), Album (naklejki), Limit (przerwa dla dziecka),
              Zapis (stan między uruchomieniami), Losowanie
   Rysunki/   Pioro (płótno z API jak w HTML na GraphicsContext, krzywe przez punkty), Postacie, Plansza
@@ -99,6 +108,10 @@ narzedzia/      eksport danych i ikony z gry webowej
 - **Sterowanie**: przytrzymanie strzałki, palec na planszy (osiołek idzie w stronę palca), klawiatura sprzętowa
   na iPadzie (strzałki, W A S D, P/Esc — pauza), wibracja przy uderzeniu w ścianę i przy spotkaniu z kotkiem.
   Na niskim ekranie poziomo strzałki stoją obok planszy.
+- **Tryb z robotem**: stuknięcie strzałki (albo klawisza) dokłada do planu cały korytarz, palec prowadzony po planszy
+  rysuje plan (powrót palcem cofa ruch), krótkie stuknięcie w planszę dokłada ruch w stronę stuknięcia; Enter — „Idź”,
+  Backspace — „Cofnij ruch”. Robot, dymek i przyciski stoją pod planszą, a na iPadzie poziomo i na telefonie
+  poziomo — obok niej. Strzałek nie da się w tym trybie schować.
 
 ## Zapis i przerwa dla dziecka
 

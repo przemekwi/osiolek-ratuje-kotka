@@ -60,7 +60,12 @@ struct MenuPauzy: View {
                 Grid(horizontalSpacing: 12, verticalSpacing: 6) {
                     GridRow { grajDalej(maly: true).gridCellColumns(2) }
                     GridRow { przebierz; album }
-                    GridRow { strzalki; PrzyciskDzwieku(pelnaSzerokosc: true) }
+                    // W trybie z robotem strzałki zostają zawsze (bez nich nie da się układać planu), więc bez przełącznika.
+                    if stan.trybPlan {
+                        GridRow { PrzyciskDzwieku(pelnaSzerokosc: true).gridCellColumns(2) }
+                    } else {
+                        GridRow { strzalki; PrzyciskDzwieku(pelnaSzerokosc: true) }
+                    }
                     GridRow { nowaGra; wyjdz }
                 }
             }
@@ -71,7 +76,7 @@ struct MenuPauzy: View {
                     grajDalej(maly: false)
                     przebierz
                     album
-                    strzalki
+                    if !stan.trybPlan { strzalki }
                     PrzyciskDzwieku(pelnaSzerokosc: true)
                     nowaGra
                     wyjdz
@@ -196,6 +201,7 @@ struct ObrazBrawo: View {
         Canvas { g, size in
             let c = Plotno(g), w = size.width, h = size.height
             wpisz(c, SCENA_RAMKA, w * 0.44, 0, w * 0.56, h) { c2, s in rysujScene(c2, s) }
+            if stan.trybPlan { wpisz(c, ROBOT_RAMKA, w * 0.27, 0, w * 0.16, h * 0.42, rysujRobota) }
             rysujOsiolka(c, 0, h * 0.18, w * 0.26, h * 0.82, stan.koszulka)
             rysujKotka(c, w * 0.22, h * 0.6, w * 0.24, h * 0.4)
         }

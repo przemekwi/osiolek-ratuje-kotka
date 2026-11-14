@@ -58,8 +58,10 @@ struct StartView: View {
 
     private var przyciski: some View {
         VStack(spacing: 12) {
-            // Dla dziecka: duży „Graj”, album, szafa i wyciszenie. Ustawienia są w „Dla rodzica” (za bramką).
+            // Dla dziecka: duży „Graj”, „Zaplanuj drogę z robotem”, album, szafa i wyciszenie. Ustawienia są w „Dla rodzica” (za bramką).
             Button { stan.graj() } label: { Text(stan.t("graj")).frame(maxWidth: .infinity) }.buttonStyle(.kreska)
+            Button { stan.graj(.plan) } label: { Text(stan.t("grajPlan")).frame(maxWidth: .infinity) }
+                .buttonStyle(.kreska(Kolory.zielony))
             Rzad {
                 Button { stan.klik(); album = true } label: {
                     HStack(spacing: 6) { IkonaDziecka(id: "album").frame(width: 24, height: 24); Text(stan.napisAlbumu).monospacedDigit() }
