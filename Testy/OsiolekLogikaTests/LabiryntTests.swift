@@ -42,21 +42,45 @@ final class LabiryntTests: XCTestCase {
         XCTAssertEqual(a.kotekI, b.kotekI)
     }
 
-    func testKrzakZagradzaDrogeISerduszkoJestOsiagalne() {
-        var sprawdzone = 0
-        for z in 1...30 {
-            let lab = Labirynt(los: Los(ziarno: UInt64(z)))
-            lab.trudnosc = 6
-            lab.wymusKrzak = true
-            lab.nowyLabirynt(szer: 900, wys: 700)
-            guard lab.przeszkoda.pole >= 0 else { continue }
-            sprawdzone += 1
-            XCTAssertLessThan(lab.bfs(lab.domI)[lab.kotekI], 0, "krzak nie zagradza")
-            XCTAssertGreaterThan(lab.bfs(lab.domI)[lab.przeszkoda.klucz], 0, "serduszko nieosiągalne")
-            lab.przeszkoda.otwarta = true
-            XCTAssertGreaterThan(lab.bfs(lab.domI)[lab.kotekI], 0)
+    func testLiczbaKrzakowRosnieZeStopniem() {
+        XCTAssertEqual((1...16).map(Labirynt.liczbaKrzakow), [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
+    }
+
+    /// Tysiące plansz: każdy krzaczek zamyka drogę do kotka, serduszka leżą po kolei (drugie za pierwszym krzaczkiem),
+    /// a symulacja przejścia dochodzi do kotka i wraca do domku.
+    func testKazdaPlanszaZKrzaczkamiDaSiePrzejsc() {
+        var pelne = 0, wszystkie = 0
+        for t in 5...24 {
+            for z in 1...40 {
+                for (szer, wys) in [(900.0, 700.0), (390.0, 640.0)] {
+                    let lab = Labirynt(los: Los(ziarno: UInt64(t * 1000 + z)))
+                    lab.trudnosc = t
+                    lab.nowyLabirynt(szer: szer, wys: wys)
+                    let n = lab.przeszkody.count, cel = Labirynt.liczbaKrzakow(t)
+                    wszystkie += 1
+                    if n == cel { pelne += 1 }
+                    XCTAssertTrue(n >= 1 && n <= cel, "stopień \(t): \(n) krzaczków")
+                    XCTAssertLessThan(lab.bfs(lab.domI)[lab.kotekI], 0, "krzaczki nie zagradzają drogi (stopień \(t))")
+                    let zajete = lab.przeszkody.flatMap { [$0.pole, $0.klucz] }
+                    XCTAssertEqual(Set(zajete).count, zajete.count, "krzaczki i serduszka na różnych polach")
+                    XCTAssertFalse(zajete.contains(lab.domI) || zajete.contains(lab.kotekI))
+                    // Po kolei: serduszko i-te osiągalne dopiero po otwarciu krzaczka i-1, a krzaczek i zamyka drogę dalej.
+                    for i in 0..<n {
+                        for j in 0..<n { lab.przeszkody[j].otwarta = j < i }
+                        let d = lab.bfs(lab.domI)
+                        XCTAssertGreaterThan(d[lab.przeszkody[i].klucz], 0, "serduszko \(i) nieosiągalne (stopień \(t))")
+                        XCTAssertLessThan(d[lab.kotekI], 0, "krzaczek \(i) nie zamyka drogi")
+                        if i > 0 {
+                            lab.przeszkody[i - 1].otwarta = false
+                            XCTAssertLessThan(lab.bfs(lab.domI)[lab.przeszkody[i].klucz], 0, "serduszko \(i) przed krzaczkiem \(i - 1)")
+                        }
+                    }
+                    for j in 0..<n { lab.przeszkody[j].otwarta = false }
+                    XCTAssertTrue(lab.daSiePrzejsc(), "plansza nie do przejścia (stopień \(t), ziarno \(z))")
+                }
+            }
         }
-        XCTAssertGreaterThan(sprawdzone, 10)
+        XCTAssertGreaterThan(Double(pelne) / Double(wszystkie), 0.8, "zwykle mieści się tyle krzaczków, ile przewiduje stopień")
     }
 
     func testLosPolaJakWJavaScripcie() {
@@ -92,6 +116,28 @@ final class RozgrywkaTests: XCTestCase {
         dojdz(do: r.lab.domI)
         XCTAssertEqual(r.faza, .koniec)
         XCTAssertEqual(r.lab.trudnosc, 2, "bez pomocy trudność rośnie")
+    }
+
+    /// Prawdziwa rozgrywka na planszach z krzaczkami: osiołek zbiera serduszka po kolei (cel podpowiedzi),
+    /// otwiera krzaczki, dochodzi do kotka i wraca z nim do domku.
+    func testPrzejscieZKrzaczkamiPoKolei() {
+        for (t, z) in [(5, 1), (9, 2), (11, 3), (13, 4), (16, 5), (20, 6)] {
+            let r = Rozgrywka(lab: Labirynt(los: Los(ziarno: UInt64(z))))
+            r.lab.trudnosc = t
+            r.zacznijPoziom(szer: 900, wys: 700)
+            var bezpiecznik = 0
+            while r.faza != .koniec && bezpiecznik < 20_000 {
+                let d = r.lab.bfs(r.celPodp)
+                let nast = r.lab.krokBlizej(r.osiol.pole, d)
+                guard let k = (0..<4).first(where: { r.osiol.pole + DX[$0] + DY[$0] * r.lab.TW == nast }) else { break }
+                r.trzymaj("test", k)
+                r.pusc("test")
+                while r.osiol.cel >= 0 { r.tik(1 / 60) }
+                bezpiecznik += 1
+            }
+            XCTAssertEqual(r.faza, .koniec, "stopień \(t): nie udało się przejść")
+            XCTAssertTrue(r.lab.przeszkody.allSatisfy(\.otwarta), "stopień \(t): krzaczek został zamknięty")
+        }
     }
 
     func testOsiolekNieWchodziWSciane() {

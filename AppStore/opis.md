@@ -22,7 +22,7 @@ W „O grze” każdy rysunek rysuje się na nowo, kreska po kresce.
 W grze:
 • labirynty dopasowane do dziecka: gdy idzie dobrze, plansza rośnie, gdy potrzebna jest pomoc, trudność stoi,
 • podpowiedź, która pokazuje tylko kawałek drogi, żeby dziecko najpierw spróbowało samo,
-• rzeczy do zebrania, krzaczek otwierany serduszkiem i plan z najkrótszą drogą po wygranej,
+• rzeczy do zebrania i krzaczki otwierane serduszkami (na dalszych poziomach do trzech),
 • szafa z koszulkami dla osiołka i album naklejek za każdego uratowanego kotka,
 • muzyka i dźwięki tworzone w urządzeniu, 8 języków.
 
@@ -59,7 +59,7 @@ T-shirts and the stickers. In "About" every drawing draws itself again, line by 
 In the game:
 • mazes that adapt to your child: the board grows when things go well and stays the same when help is needed,
 • a hint that shows only part of the way, so your child tries first,
-• things to collect, a bush opened with a heart, and a plan with the shortest route after each win,
+• things to collect and bushes opened with hearts (up to three on later levels),
 • a wardrobe with T-shirts for the donkey and a sticker album for every rescued kitten,
 • music and sounds made on the device, 8 languages.
 

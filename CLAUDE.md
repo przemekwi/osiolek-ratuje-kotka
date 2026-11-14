@@ -20,6 +20,13 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
 - Środowisko chmurowe nie ma Xcode ani symulatora: kodu Swift nie da się tu zbudować. Po każdej zmianie
   właściciel buduje w Xcode (Integrate → Pull, ⌘R, ⌘U) i przysyła zrzuty błędów albo ekranów.
 
+## Wersje
+- Każda zmiana podnosi wersję (`App/Wersja.swift`, ten sam numer w grze webowej: `WERSJA` w `osiolek.html`):
+  nowy tryb albo przebudowa → całość (2.0), większa zmiana → o 0.1 (1.2), mała zmiana → litera (1.1a, 1.1b…).
+- App Store przyjmuje tylko cyfry: `MARKETING_VERSION` = numer z literą jako trzecią liczbą (1.1a → 1.1.1);
+  `CURRENT_PROJECT_VERSION` (kompilacja) rośnie o 1 przy każdej zmianie wersji.
+- Każdą wersję dopisujemy do „Historii wersji” w `README.md`.
+
 ## Kluczowe decyzje
 - Poza zakresem: gra w karty „Osiołek rozsypał karty” (osobna gra), udostępnianie, PWA, wyzwania z linku,
   plansza „Widzisz krótszą drogę?” po wygranej (usunięta).
@@ -34,6 +41,10 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
   2 przedłużenia dziennie.
 - „O grze”: Autor: Przemysław Wilde i Córcia, opis właściciela, linki: Wilde.pl, wpis na blogu o grze,
   gry.wilde.pl; rysunki za przyciskiem (zdjęcie kartki → przenikanie → rysowanie).
+- Trudność dopasowana do dziecka (rośnie, gdy radzi sobie samo; stoi po dużej pomocy; spada po dwóch trudnych).
+  Krzaczki z serduszkami: od stopnia 5 jeden, od 9 dwa, od 13 trzy — nigdy więcej; serduszka po kolei,
+  każda plansza przechodzi symulację przejścia (`daSiePrzejsc`). Gra webowa ma tę samą logikę.
+- Gra webowa (repo `gry`) wygląda i działa jak aplikacja (iOS jest wzorcem); rozwijamy tylko aplikację.
 - Identyfikator pakietu: `pl.wilde.osiolek-ratuje-kotka` (po pierwszej wysyłce niezmienny).
 - Konto Apple Developer: Individual / Sole Proprietor (w sklepie widoczne imię i nazwisko).
 
@@ -43,7 +54,7 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
   tryb dla dorosłych, usunięcie porównania drogi, nowy identyfikator) nie były jeszcze budowane przez właściciela.
 
 ## Następne kroki
-1. Właściciel: Pull, wybór zespołu w Signing & Capabilities (nowy identyfikator), ⌘U (oczekiwane 21 testów),
+1. Właściciel: Pull, wybór zespołu w Signing & Capabilities (nowy identyfikator), ⌘U (oczekiwane 24 testy),
    test na iPhonie i z córką; poprawki zgłaszane zrzutami.
 2. Scalenie PR #1 do `main` (decyzja właściciela).
 3. Formalności: konto Apple Developer (opłata), konsultacja statusu przedsiębiorcy w UE (DSA) z księgową,

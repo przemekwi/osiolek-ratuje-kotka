@@ -22,7 +22,7 @@ struct NakladkiGry: View {
                     .frame(maxWidth: .infinity, minHeight: 0)
                 }
                 .scrollBounceBehavior(.basedOnSize)
-                .defaultScrollAnchor(.center)
+                .defaultScrollAnchor(.center, for: .alignment)
             }
             }
             .transition(.opacity)

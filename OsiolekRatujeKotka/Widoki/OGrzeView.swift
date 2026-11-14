@@ -62,7 +62,7 @@ struct OGrzeView: View {
                         Text(Teksty.surowy(stan.jezyk, "o")[8].napis)
                             .font(.kreda(12, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
                     }
-                    Text("© 2026 Przemysław Wilde").font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche)
+                    Text(stan.t("wersja", ["w": Wersja.numer]) + " · © 2026 Przemysław Wilde").font(.kreda(14, gruby: false)).foregroundStyle(Kolory.ciche)
                     Button(stan.t("wroc")) { stan.klik(); zamknij() }.buttonStyle(.kreska)
                 }
                 .foregroundStyle(Kolory.tekst)

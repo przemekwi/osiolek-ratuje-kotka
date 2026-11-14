@@ -176,8 +176,7 @@ func rysujPlansze(_ c: Plotno, _ gra: Rozgrywka, _ S: Geometria, _ P_: Paleta, t
     func sx(_ v: Double) -> Double { S.sx(v) }
     func sy(_ v: Double) -> Double { S.sy(v) }
     for s in gra.slady { lapka(c, sx(Double(lab.ix(s.i))), sy(Double(lab.iy(s.i))), C * 0.13, s.k, kolorK("lapka")) }
-    let pr = lab.przeszkoda
-    if pr.pole >= 0 {
+    for pr in lab.przeszkody where pr.pole >= 0 {
         // Serduszko pulsuje skalą płótna, nie rozmiarem postaci.
         if !pr.otwarta {
             let f = ruch ? 0.92 + 0.08 * sin(t * 4) : 1

@@ -27,6 +27,18 @@ final class LimitTests: XCTestCase {
         XCTAssertEqual(l.licz(Limit.DOGRYWKA, wLabiryncie: true), .przerwa)
     }
 
+    /// Po limicie dziennym też najwyżej 2 minuty na dokończenie labiryntu (nie bez końca).
+    func testDokonczenieLabiryntuPoLimicieDniaNajwyzejDwieMinuty() {
+        var l = Limit(), los = Los(ziarno: 4)
+        l.nowyDzien("d")
+        l.ustaw(sesja: 30, dzien: 20)
+        _ = l.licz(20 * 60, wLabiryncie: true)
+        XCTAssertEqual(l.licz(1, wLabiryncie: true), .dokonczLabirynt)
+        XCTAssertEqual(l.licz(Limit.DOGRYWKA, wLabiryncie: true), .przerwa)
+        l.przerwa(teraz: 0, &los)
+        XCTAssertEqual(l.blokada, .dzien)
+    }
+
     func testPrzedluzeniaCorazKrotszeNajwyzejDwa() {
         var l = Limit(), los = Los(ziarno: 2)
         l.nowyDzien("d")

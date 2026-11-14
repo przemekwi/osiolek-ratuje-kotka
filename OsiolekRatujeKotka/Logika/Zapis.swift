@@ -8,7 +8,9 @@ struct StanPlanszy: Codable, Equatable {
     var domI: Int
     var kotekI: Int
     var wersja: Int
-    var przeszkoda: Przeszkoda
+    /// Dawny zapis z jednym krzaczkiem (odczyt starszych plików).
+    var przeszkoda: Przeszkoda?
+    var przeszkody: [Przeszkoda]?
     var trybGry: TrybGry
     var faza: Faza
     var osiol: Ruchomy
@@ -64,7 +66,7 @@ extension Rozgrywka {
             return Ruchomy(pole: p, x: Double(lab.ix(p)), y: Double(lab.iy(p)), cel: -1)
         }
         return StanPlanszy(G: lab.G, TW: lab.TW, TH: lab.TH, domI: lab.domI, kotekI: lab.kotekI, wersja: lab.wersja,
-                           przeszkoda: Przeszkoda(pole: lab.przeszkoda.pole, klucz: lab.przeszkoda.klucz, otwarta: lab.przeszkoda.otwarta, znika: 0),
+                           przeszkoda: nil, przeszkody: lab.przeszkody.map { Przeszkoda(pole: $0.pole, klucz: $0.klucz, otwarta: $0.otwarta, znika: 0) },
                            trybGry: lab.trybGry, faza: faza, osiol: doCelu(osiol), kot: doCelu(kot), serca: serca, sercaN: sercaN,
                            zebrane: zebrane, przedmiot: przedmiot, trasa: trasa, trasaKot: trasaKot, slady: slady,
                            podpowiedzi: podpowiedzi, podpMaks: podp.maks, czas: czas, start: start)
@@ -74,7 +76,7 @@ extension Rozgrywka {
     func przywroc(_ s: StanPlanszy) {
         lab.G = s.G; lab.TW = s.TW; lab.TH = s.TH; lab.domI = s.domI; lab.kotekI = s.kotekI
         lab.wersja = s.wersja + 1
-        lab.przeszkoda = s.przeszkoda
+        lab.przeszkody = s.przeszkody ?? (s.przeszkoda.map { $0.pole >= 0 ? [$0] : [] } ?? [])
         lab.trybGry = s.trybGry
         puscWszystko()
         faza = s.faza; osiol = s.osiol; kot = s.kot
