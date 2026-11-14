@@ -33,7 +33,8 @@ extension Rozgrywka {
     }
 
     var celPodp: Int {
-        if faza == .szukaj && !lab.przeszkoda.otwarta { return lab.przeszkoda.klucz }
+        // Krzaczki po kolei: najpierw serduszko pierwszego zamkniętego.
+        if faza == .szukaj, let p = lab.przeszkody.first(where: { !$0.otwarta }) { return p.klucz }
         return lab.trybGry == .plan || faza == .szukaj ? lab.kotekI : lab.domI
     }
 

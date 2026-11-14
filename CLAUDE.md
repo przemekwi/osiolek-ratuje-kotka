@@ -34,6 +34,10 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
   2 przedłużenia dziennie.
 - „O grze”: Autor: Przemysław Wilde i Córcia, opis właściciela, linki: Wilde.pl, wpis na blogu o grze,
   gry.wilde.pl; rysunki za przyciskiem (zdjęcie kartki → przenikanie → rysowanie).
+- Trudność dopasowana do dziecka (rośnie, gdy radzi sobie samo; stoi po dużej pomocy; spada po dwóch trudnych).
+  Krzaczki z serduszkami: od stopnia 5 jeden, od 9 dwa, od 13 trzy — nigdy więcej; serduszka po kolei,
+  każda plansza przechodzi symulację przejścia (`daSiePrzejsc`). Gra webowa ma tę samą logikę.
+- Gra webowa (repo `gry`) wygląda i działa jak aplikacja (iOS jest wzorcem); rozwijamy tylko aplikację.
 - Identyfikator pakietu: `pl.wilde.osiolek-ratuje-kotka` (po pierwszej wysyłce niezmienny).
 - Konto Apple Developer: Individual / Sole Proprietor (w sklepie widoczne imię i nazwisko).
 
@@ -43,7 +47,7 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
   tryb dla dorosłych, usunięcie porównania drogi, nowy identyfikator) nie były jeszcze budowane przez właściciela.
 
 ## Następne kroki
-1. Właściciel: Pull, wybór zespołu w Signing & Capabilities (nowy identyfikator), ⌘U (oczekiwane 21 testów),
+1. Właściciel: Pull, wybór zespołu w Signing & Capabilities (nowy identyfikator), ⌘U (oczekiwane 24 testy),
    test na iPhonie i z córką; poprawki zgłaszane zrzutami.
 2. Scalenie PR #1 do `main` (decyzja właściciela).
 3. Formalności: konto Apple Developer (opłata), konsultacja statusu przedsiębiorcy w UE (DSA) z księgową,

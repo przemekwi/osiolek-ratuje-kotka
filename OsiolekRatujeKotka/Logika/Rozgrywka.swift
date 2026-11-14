@@ -91,7 +91,7 @@ final class Rozgrywka {
         oparty = nil; kroki = 0; czas = 0; start = false; podpowiedzi = 0; bum = 0
         slady = []; pauza = false; radosc = 0; trasa = [d]; trasaKot = 0; droga = nil; drogaZostalo = 0
         serca = losujSerca(); sercaN = serca.count; zebrane = 0
-        let krzak = lab.przeszkoda.pole >= 0
+        let krzak = !lab.przeszkody.isEmpty
         przedmiot = lab.los.pick(Przedmiot.allCases.filter { $0 != przedmiot && !($0 == .serce && krzak) })
         geo = nil
         podpStart()
@@ -105,7 +105,7 @@ final class Rozgrywka {
             var x = 1
             while x < TW {
                 let i = y * TW + x
-                if i != lab.domI && i != lab.kotekI && i != lab.przeszkoda.pole && i != lab.przeszkoda.klucz { pola.append(i) }
+                if i != lab.domI && i != lab.kotekI && !lab.przeszkody.contains(where: { $0.pole == i || $0.klucz == i }) { pola.append(i) }
                 x += 2
             }
             y += 2
@@ -151,8 +151,8 @@ final class Rozgrywka {
     func idz(_ k: Int) {
         let krok = DX[k] + DY[k] * TW
         let nx = osiol.pole + krok
-        let z = lab.zamknietyKrzak
-        let krzak = nx == z || nx + krok == z
+        let z = lab.zamkniete
+        let krzak = z.contains(nx) || z.contains(nx + krok)
         if lab.G[nx] != 0 || krzak {
             if oparty != k {
                 bum = ograniczonyRuch ? 0 : 0.25
@@ -194,8 +194,8 @@ final class Rozgrywka {
         kroki += 1
         let p = osiol.pole
         if lab.jestPolem(p) { naZdarzenie?(.krokRuchu); trasa.append(p) }
-        if p == lab.przeszkoda.klucz && !lab.przeszkoda.otwarta {
-            lab.przeszkoda.otwarta = true; lab.przeszkoda.znika = 1
+        if let j = lab.przeszkody.firstIndex(where: { $0.klucz == p && !$0.otwarta }) {
+            lab.przeszkody[j].otwarta = true; lab.przeszkody[j].znika = 1
             naZdarzenie?(.krzakZnika)
         }
         if let s = serca.firstIndex(of: p) {
@@ -224,7 +224,9 @@ final class Rozgrywka {
         krokAnimacji(dt)
         if bum > 0 { bum = max(0, bum - dt) }
         if radosc > 0 { radosc = max(0, radosc - dt) }
-        if lab.przeszkoda.znika > 0 { lab.przeszkoda.znika = ograniczonyRuch ? 0 : max(0, lab.przeszkoda.znika - dt * 1.6) }
+        for j in lab.przeszkody.indices where lab.przeszkody[j].znika > 0 {
+            lab.przeszkody[j].znika = ograniczonyRuch ? 0 : max(0, lab.przeszkody[j].znika - dt * 1.6)
+        }
         liczPodp(dt)
         if drogaZostalo > 0 { drogaZostalo -= dt; if drogaZostalo <= 0 { droga = nil } }
         if start && (faza == .szukaj || faza == .prowadz) { czas += dt }
@@ -235,8 +237,9 @@ final class Rozgrywka {
     func bladzi() -> Bool {
         if lab.trybGry != .zwykly || trasa.count < 2 { return false }
         func odl(_ a: Int, _ b: Int) -> Double { Double(lab.bfs(a, bezKrzaka: true)[b]) / 2 }
-        let k = lab.przeszkoda.pole >= 0 ? lab.przeszkoda.klucz : -1
-        let najkrotsza = (k >= 0 ? odl(lab.domI, k) + odl(k, lab.kotekI) : odl(lab.domI, lab.kotekI)) + odl(lab.kotekI, lab.domI)
+        // Najkrótsza droga przez serduszka po kolei: domek → serduszka → kotek → domek.
+        let punkty = [lab.domI] + lab.przeszkody.map(\.klucz).filter { $0 >= 0 } + [lab.kotekI, lab.domI]
+        let najkrotsza = zip(punkty, punkty.dropFirst()).reduce(0.0) { $0 + odl($1.0, $1.1) }
         return Double(trasa.count - 1) > Rozgrywka.BLADZENIE * najkrotsza
     }
 
@@ -260,9 +263,9 @@ final class Rozgrywka {
 
 extension Rozgrywka {
     /// Coś na planszy porusza się płynnie (osiołek, kotek, radość, uderzenie, znikający krzaczek).
-    var ruchNaPlanszy: Bool { osiol.cel >= 0 || kot.cel >= 0 || radosc > 0 || bum > 0 || lab.przeszkoda.znika > 0 }
+    var ruchNaPlanszy: Bool { osiol.cel >= 0 || kot.cel >= 0 || radosc > 0 || bum > 0 || lab.przeszkody.contains { $0.znika > 0 } }
     /// Tylko łagodna animacja: pulsujące serduszko albo łapki podpowiedzi (wystarczy rzadsze odświeżanie).
-    var spokojnaAnimacja: Bool { (lab.przeszkoda.pole >= 0 && !lab.przeszkoda.otwarta) || (droga != nil && drogaZostalo > 0) }
+    var spokojnaAnimacja: Bool { lab.przeszkody.contains { !$0.otwarta } || (droga != nil && drogaZostalo > 0) }
 
     /// Ułożenie planszy nie pasuje do ramki (np. labirynt pionowy na ekranie poziomym).
     func zlyKsztalt(szer: Double, wys: Double) -> Bool {
@@ -279,7 +282,7 @@ extension Rozgrywka {
         for i in 0..<(tw * th) { g[t(i)] = lab.G[i] }
         lab.G = g; lab.TW = th; lab.TH = tw
         lab.domI = t(lab.domI); lab.kotekI = t(lab.kotekI)
-        lab.przeszkoda.pole = t(lab.przeszkoda.pole); lab.przeszkoda.klucz = t(lab.przeszkoda.klucz)
+        lab.przeszkody = lab.przeszkody.map { Przeszkoda(pole: t($0.pole), klucz: t($0.klucz), otwarta: $0.otwarta, znika: $0.znika) }
         func r(_ o: Ruchomy) -> Ruchomy { Ruchomy(pole: t(o.pole), x: o.y, y: o.x, cel: t(o.cel)) }
         osiol = r(osiol); kot = r(kot)
         serca = serca.map(t); trasa = trasa.map(t)

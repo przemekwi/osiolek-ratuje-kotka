@@ -71,9 +71,10 @@ final class Labirynt {
     var pomocZRzedu = 0
     var byly = Set<String>()
     var ostatnia = (charakter: "", rog: -1, zwodniczy: false)
-    var przeszkoda = Przeszkoda()
+    /// Krzaczki z serduszkami (od stopnia 5: jeden, od 9: dwa, od 13: trzy), w kolejności na drodze do kotka.
+    var przeszkody: [Przeszkoda] = []
     var trybGry: TrybGry = .zwykly
-    /// Do testów: wymusza (albo zabrania) krzaczka na etapie 3.
+    /// Do testów: wymusza (albo zabrania) krzaczków na etapie 3.
     var wymusKrzak: Bool?
 
     init(los: Los = Los()) { self.los = los }
@@ -82,21 +83,27 @@ final class Labirynt {
     @inline(__always) func iy(_ i: Int) -> Int { i / TW }
     @inline(__always) func jestPolem(_ i: Int) -> Bool { ix(i) % 2 == 1 && iy(i) % 2 == 1 }
 
-    var zamknietyKrzak: Int { przeszkoda.otwarta ? -1 : przeszkoda.pole }
+    /// Pierwszy zamknięty krzaczek (to jego serduszko trzeba teraz zebrać); gdy wszystkie otwarte — ostatni.
+    var przeszkoda: Przeszkoda { przeszkody.first { !$0.otwarta } ?? przeszkody.last ?? Przeszkoda() }
+    /// Pola zamkniętych krzaczków.
+    var zamkniete: [Int] { przeszkody.filter { !$0.otwarta }.map(\.pole) }
 
-    /// Odległości od pola s. Zamknięty krzaczek działa jak ściana, dopóki osiołek nie zbierze serduszka.
+    /// Ile krzaczków na danym stopniu trudności.
+    static func liczbaKrzakow(_ t: Int) -> Int { t < 5 ? 0 : t < 9 ? 1 : t < 13 ? 2 : 3 }
+
+    /// Odległości od pola s. Zamknięty krzaczek działa jak ściana, dopóki osiołek nie zbierze jego serduszka.
     func bfs(_ s: Int, bezKrzaka: Bool = false) -> [Int] {
         let n = TW * TH
         var d = [Int](repeating: -1, count: n)
         var q = [Int](repeating: 0, count: n)
-        let z = bezKrzaka ? -1 : zamknietyKrzak
+        let z = bezKrzaka ? [] : zamkniete
         var h = 0, t = 0
         d[s] = 0; q[t] = s; t += 1
         while h < t {
             let c = q[h]; h += 1
             for k in 0..<4 {
                 let m = c + DX[k] + DY[k] * TW
-                if G[m] == 0 && m != z && d[m] < 0 { d[m] = d[c] + 1; q[t] = m; t += 1 }
+                if G[m] == 0 && !z.contains(m) && d[m] < 0 { d[m] = d[c] + 1; q[t] = m; t += 1 }
             }
         }
         return d
@@ -382,8 +389,8 @@ final class Labirynt {
     }
 
     /// Nowy labirynt dla bieżącej trudności w ramce szer×wys (punkty ekranu).
-    func nowyLabirynt(szer: Double, wys: Double) {
-        przeszkoda = Przeszkoda()
+    func nowyLabirynt(szer: Double, wys: Double, proba: Int = 0) {
+        przeszkody = []
         let (cw, ch) = Labirynt.rozmiar(trudnosc, szer: szer, wys: wys)
         let e = etap
         let petle = e == 1 ? 0 : max(0, 0.25 - 0.03 * Double(trudnosc - 1))
@@ -419,12 +426,15 @@ final class Labirynt {
         G = w.G; TW = w.TW; TH = w.TH; domI = w.dom; kotekI = w.kot; wersja += 1
         let dx = (ix(domI) - 1) / 2, dy = (iy(domI) - 1) / 2
         ostatnia = (b.charakter, Labirynt.rogi(cw, ch).firstIndex { $0.0 == dx && $0.1 == dy } ?? -1, w.zwodniczy)
-        if etap == 3 && trybGry == .zwykly && (wymusKrzak ?? (los.R() < 0.5)) { ustawKrzak() }
+        if etap == 3 && trybGry == .zwykly && (wymusKrzak ?? true) {
+            ustawKrzaki(max(1, Labirynt.liczbaKrzakow(trudnosc)))
+            // Rzadko żadne pole nie zamyka wszystkich dróg do kotka (dwie niezależne drogi): wtedy inny labirynt.
+            if przeszkody.isEmpty && proba < 8 { nowyLabirynt(szer: szer, wys: wys, proba: proba + 1) }
+        }
     }
 
-    /// Krzaczek na polu, przez które musi przejść każda droga do kotka (środkowa część drogi);
-    /// serduszko-klucz osiągalne bez przechodzenia przez krzaczek, najchętniej w bocznym korytarzu.
-    func ustawKrzak() {
+    /// Pola najkrótszej drogi od domku do kotka (bez domku i kotka), w kolejności od domku; krzaczki pomijamy.
+    func drogaDoKotka() -> [Int] {
         let d = bfs(domI, bezKrzaka: true)
         var droga: [Int] = []
         var cur = kotekI
@@ -434,28 +444,93 @@ final class Labirynt {
             if nast == cur { break }
             cur = nast
         }
-        let naDrodze = Set(droga)
-        let od = Int((Double(droga.count) * 0.3).rounded(.down)), doo = Int((Double(droga.count) * 0.7).rounded(.up))
-        let kand = od < doo ? Array(droga[od..<min(doo, droga.count)]) : []
-        for pole in los.tasuj(kand) {
-            przeszkoda.pole = pole; przeszkoda.otwarta = false
-            let dz = bfs(domI)
-            if dz[kotekI] >= 0 { continue }
-            var klucze: [Int] = []
-            var y = 1
-            while y < TH {
-                var x = 1
-                while x < TW { let i = y * TW + x; if dz[i] > 0 && i != domI { klucze.append(i) }; x += 2 }
-                y += 2
-            }
-            let boczne = klucze.filter { !naDrodze.contains($0) && dz[$0] >= 4 }
-            if klucze.isEmpty { continue }
-            przeszkoda.klucz = los.pick(boczne.isEmpty ? klucze : boczne)
-            return
-        }
-        przeszkoda = Przeszkoda()
+        return droga
     }
 
+    /// Pola drogi, przez które przechodzi każda droga do kotka (zamknięcie jednego odcina kotka od domku), po kolei od domku.
+    func ciecieDrogi(_ droga: [Int]) -> [Int] {
+        droga.filter { c in
+            G[c] = 1
+            let odcina = bfs(domI, bezKrzaka: true)[kotekI] < 0
+            G[c] = 0
+            return odcina
+        }
+    }
+
+    /// Krzaczki: najwięcej `ile`, a gdy się nie mieszczą (mała plansza) — mniej. Bez miejsca — żadnego.
+    func ustawKrzaki(_ ile: Int) {
+        var n = ile
+        while n > 0 {
+            for _ in 0..<30 where sprobujKrzaki(n) { return }
+            n -= 1
+        }
+        przeszkody = []
+    }
+
+    /// Krzaczki po kolei na najkrótszej drodze do kotka (środkowa część drogi). Każdy zamyka każdą drogę do kotka,
+    /// a serduszko do niego leży za poprzednim krzaczkiem (najchętniej w bocznym korytarzu): serduszka zbiera się po kolei.
+    /// Na końcu symulacja sprawdza, że całość da się przejść.
+    private func sprobujKrzaki(_ n: Int) -> Bool {
+        przeszkody = []
+        let droga = drogaDoKotka(), ciecia = ciecieDrogi(droga)
+        guard ciecia.count >= n else { return false }
+        // Krzaczek i-ty na i-tym odcinku pól cięcia, z pominięciem samego początku i końca drogi, gdy jest z czego wybierać.
+        let srodek = ciecia.count >= n + 2
+            ? Array(ciecia[Int((Double(ciecia.count) * 0.15).rounded(.down))..<max(n, Int((Double(ciecia.count) * 0.9).rounded(.up)))])
+            : ciecia
+        let naDrodze = Set(droga)
+        func zajete(_ c: Int) -> Bool { przeszkody.contains { $0.pole == c || $0.klucz == c } }
+        func otworzDo(_ k: Int, _ otwarte: Bool) { for j in 0..<k { przeszkody[j].otwarta = otwarte } }
+        for i in 0..<n {
+            let od = srodek.count * i / n, doo = max(od + 1, srodek.count * (i + 1) / n)
+            var ustawiony = false
+            for pole in los.tasuj(Array(srodek[od..<doo])) where !zajete(pole) {
+                przeszkody.append(Przeszkoda(pole: pole, klucz: -1, otwarta: false, znika: 0))
+                otworzDo(i, true)
+                let dz = bfs(domI)
+                var przed: [Int] = []
+                if i > 0 { przeszkody[i - 1].otwarta = false; przed = bfs(domI); przeszkody[i - 1].otwarta = true }
+                otworzDo(i, false)
+                if dz[kotekI] >= 0 { przeszkody.removeLast(); continue }
+                var klucze: [Int] = []
+                var y = 1
+                while y < TH {
+                    var x = 1
+                    while x < TW {
+                        let c = y * TW + x
+                        if dz[c] > 0 && c != domI && !zajete(c) && (i == 0 || przed[c] < 0) { klucze.append(c) }
+                        x += 2
+                    }
+                    y += 2
+                }
+                if klucze.isEmpty { przeszkody.removeLast(); continue }
+                let boczne = klucze.filter { !naDrodze.contains($0) && (i > 0 || dz[$0] >= 4) }
+                przeszkody[i].klucz = los.pick(boczne.isEmpty ? klucze : boczne)
+                ustawiony = true
+                break
+            }
+            if !ustawiony { przeszkody = []; return false }
+        }
+        if daSiePrzejsc() { return true }
+        przeszkody = []
+        return false
+    }
+
+    /// Symulacja przejścia: z domku zbieramy osiągalne serduszka (każde otwiera swój krzaczek), aż kotek
+    /// będzie osiągalny; potem powrót do domku. Stan krzaczków wraca do zamkniętych.
+    func daSiePrzejsc() -> Bool {
+        defer { for j in przeszkody.indices { przeszkody[j].otwarta = false } }
+        for j in przeszkody.indices { przeszkody[j].otwarta = false }
+        while true {
+            let d = bfs(domI)
+            if d[kotekI] > 0 { return bfs(kotekI)[domI] > 0 }
+            var otwarto = false
+            for j in przeszkody.indices where !przeszkody[j].otwarta && przeszkody[j].klucz >= 0 && d[przeszkody[j].klucz] > 0 {
+                przeszkody[j].otwarta = true; otwarto = true
+            }
+            if !otwarto { return false }
+        }
+    }
 }
 
 /// Geometria planszy na ekranie: pola mają szerokość C, ściany C·SCIANA (`geometria` i `srodek` z gry).
