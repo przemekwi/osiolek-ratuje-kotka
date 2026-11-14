@@ -138,6 +138,17 @@ enum TekstyAplikacji {
             "pl": "Wibracje: wyłączone", "en": "Vibration: off", "fr": "Vibrations : désactivées", "es": "Vibración: desactivada",
             "de": "Vibration: aus", "it": "Vibrazione: disattiva", "zh-Hans": "振动：关", "zh-Hant": "震動：關",
         ],
+        "rysunkiWsk": [
+            "pl": "Stuknij rysunek, a narysuje się na nowo.", "en": "Tap a drawing to watch it being drawn.",
+            "fr": "Touchez un dessin pour le voir se dessiner.", "es": "Toca un dibujo para verlo dibujarse.",
+            "de": "Tippe auf eine Zeichnung, dann zeichnet sie sich neu.", "it": "Tocca un disegno e si disegnerà di nuovo.",
+            "zh-Hans": "点一下画，看它重新画出来。", "zh-Hant": "點一下畫，看它重新畫出來。",
+        ],
+        "rysujPonownie": [
+            "pl": "Stuknij, żeby narysować jeszcze raz.", "en": "Tap to draw it again.", "fr": "Touchez pour redessiner.",
+            "es": "Toca para dibujarlo otra vez.", "de": "Tippe, um es noch einmal zu zeichnen.", "it": "Tocca per disegnarlo ancora.",
+            "zh-Hans": "点一下再画一次。", "zh-Hant": "點一下再畫一次。",
+        ],
         "oKrotko": [
             "pl": "Osiołek szuka kotka w labiryncie i prowadzi go do domku. Każdy poziom to nowy labirynt. Bez reklam i bez internetu, gra niczego nie zbiera.",
             "en": "The donkey looks for the kitten in a maze and takes it home. Every level is a new maze. No ads, no internet, and the game collects nothing.",

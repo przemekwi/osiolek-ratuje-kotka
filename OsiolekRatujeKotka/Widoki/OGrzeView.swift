@@ -7,6 +7,8 @@ struct OGrzeView: View {
     let zamknij: () -> Void
     /// Link czekający na bramkę rodzica.
     @State private var link: URL?
+    /// Rysunek powiększony do „rysowania się”.
+    @State private var powiekszony: Rysunek?
 
     private var pl: Bool { stan.jezyk == "pl" }
     private var gry: URL { URL(string: pl ? "https://gry.wilde.pl/" : "https://gry.wilde.pl/en/")! }
@@ -45,6 +47,7 @@ struct OGrzeView: View {
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize)
+            if let r = powiekszony { RysunekRysujeSie(rysunek: r) { powiekszony = nil } }
             if link != nil { bramka }
         }
     }
@@ -100,44 +103,93 @@ struct OGrzeView: View {
         }
     }
 
-    // MARK: Rysunki dziecka (jak „pary” w grze, bez zdjęć kartek)
+    // MARK: Rysunki dziecka (bez zdjęć kartek): stuknięcie powiększa rysunek, który rysuje się sam
     private var rysunki: some View {
-        let nazwy = Teksty.surowy(stan.jezyk, "nazwy")
-        let postacie = ["osiolek", "kotek", "dom", "robot", "lapka", "krzak", "slonce", "zwierzatko", "dziewczynka", "jednorozec",
-                        "gwiazdki", "serce", "trawa", "samochod", "kon", "grzybek", "pilka"]
-        let ikony = ["strzalka", "idz", "cofnij", "odnowa", "podpowiedz", "menu"]
-        return VStack(spacing: 8) {
+        VStack(spacing: 8) {
             Text(stan.t("rysunkiH")).font(.kreda(20)).accessibilityAddTraits(.isHeader)
+            Text(stan.t("rysunkiWsk")).font(.kreda(13, gruby: false)).foregroundStyle(Kolory.ciche).multilineTextAlignment(.center)
             Zawijanie(odstep: 8) {
-                ForEach(postacie, id: \.self) { id in
-                    karta(nazwy[id == "dom" ? "domek" : id].napis) { ObrazNaklejki(id: id) }
-                }
-                karta(nazwy["album"].napis) {
-                    Canvas { g, size in
-                        wpisz(Plotno(g), ALBUM_RAMKA, 2, 2, size.width - 4, size.height - 4) { c, s in rysujAlbum(c, s, KOLORY_ALBUMU[0]) }
+                ForEach(Rysunek.wszystkie(stan), id: \.id) { r in
+                    Button {
+                        stan.klik(); powiekszony = r
+                    } label: {
+                        VStack(spacing: 2) {
+                            Canvas { g, size in r.rysuj(Plotno(g), size) }.frame(width: 80, height: 80)
+                            Text(r.nazwa).font(.kreda(12, gruby: false)).lineLimit(2).multilineTextAlignment(.center).frame(width: 90)
+                        }
+                        .padding(6)
+                        .kreska(Kolory.karta)
                     }
-                }
-                ForEach(Koszulka.wszystkie.indices, id: \.self) { n in
-                    let k = Koszulka.wszystkie[n]
-                    karta(stan.t("koszulka", ["n": n + 1])) {
-                        Canvas { g, size in wpisz(Plotno(g), k.ramka, 4, 4, size.width - 8, size.height - 8) { c, s in rysujKoszulke(c, s, k) } }
-                    }
-                }
-                ForEach(ikony, id: \.self) { id in
-                    karta(nazwy[id].napis) { IkonaDziecka(id: id, kolor: Kolory.tusz) }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(stan.t("wGrzeAlt", ["n": r.nazwa]))
                 }
             }
         }
     }
+}
 
-    private func karta<Obraz: View>(_ nazwa: String, @ViewBuilder _ obraz: () -> Obraz) -> some View {
-        VStack(spacing: 2) {
-            obraz().frame(width: 80, height: 80)
-            Text(nazwa).font(.kreda(12, gruby: false)).lineLimit(2).multilineTextAlignment(.center).frame(width: 90)
+/// Rysunek dziecka do galerii w „O grze”.
+struct Rysunek {
+    let id: String
+    let nazwa: String
+    let rysuj: (Plotno, CGSize) -> Void
+
+    static func wszystkie(_ stan: StanGry) -> [Rysunek] {
+        let nazwy = Teksty.surowy(stan.jezyk, "nazwy")
+        var w: [Rysunek] = []
+        for id in ["osiolek", "kotek", "dom", "robot", "lapka", "krzak", "slonce", "zwierzatko", "dziewczynka", "jednorozec",
+                   "gwiazdki", "serce", "trawa", "samochod", "kon", "grzybek", "pilka"] {
+            let r = rysunekNaklejki(id)
+            w.append(Rysunek(id: id, nazwa: nazwy[id == "dom" ? "domek" : id].napis) { c, size in
+                wpisz(c, r.ramka, 2, 2, size.width - 4, size.height - 4, r.rysuj)
+            })
         }
-        .padding(6)
-        .kreska(Kolory.karta)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(stan.t("wGrzeAlt", ["n": nazwa]))
+        w.append(Rysunek(id: "album", nazwa: nazwy["album"].napis) { c, size in
+            wpisz(c, ALBUM_RAMKA, 2, 2, size.width - 4, size.height - 4) { c2, s in rysujAlbum(c2, s, KOLORY_ALBUMU[0]) }
+        })
+        for (n, k) in Koszulka.wszystkie.enumerated() {
+            w.append(Rysunek(id: k.id, nazwa: stan.t("koszulka", ["n": n + 1])) { c, size in
+                wpisz(c, k.ramka, 4, 4, size.width - 8, size.height - 8) { c2, s in rysujKoszulke(c2, s, k) }
+            })
+        }
+        for id in ["strzalka", "idz", "cofnij", "odnowa", "podpowiedz", "menu"] {
+            w.append(Rysunek(id: "ikona-" + id, nazwa: nazwy[id].napis) { c, size in rysujIkone(c, size, id, kolor: Kolory.tusz) })
+        }
+        return w
+    }
+}
+
+/// Powiększony rysunek, który rysuje się na oczach: najpierw kreski jak długopisem, potem kolor (ok. 3,5 s).
+/// Stuknięcie rysuje od nowa. Przy ograniczonym ruchu od razu cały rysunek.
+struct RysunekRysujeSie: View {
+    @Environment(StanGry.self) private var stan
+    @Environment(\.accessibilityReduceMotion) private var ograniczRuch
+    let rysunek: Rysunek
+    let zamknij: () -> Void
+    @State private var start = Date()
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5).ignoresSafeArea().onTapGesture { zamknij() }
+            Panel {
+                Text(rysunek.nazwa).font(.kreda(24)).multilineTextAlignment(.center)
+                TimelineView(.animation(paused: ograniczRuch)) { tl in
+                    let p = ograniczRuch ? 1 : min(1, tl.date.timeIntervalSince(start) / 3.5)
+                    Canvas { g, size in
+                        let c = Plotno(g)
+                        c.postep = p < 1 ? p : nil
+                        rysunek.rysuj(c, size)
+                    }
+                }
+                .frame(width: 260, height: 260)
+                .contentShape(Rectangle())
+                .onTapGesture { stan.klik(); start = Date() }
+                .accessibilityLabel(stan.t("wGrzeAlt", ["n": rysunek.nazwa]))
+                Text(stan.t("rysujPonownie")).font(.kreda(13, gruby: false)).foregroundStyle(Kolory.ciche)
+                Button(stan.t("wroc")) { stan.klik(); zamknij() }.buttonStyle(.kreska)
+            }
+            .foregroundStyle(Kolory.tekst)
+        }
+        .onAppear { start = Date() }
     }
 }

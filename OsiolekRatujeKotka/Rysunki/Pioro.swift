@@ -113,8 +113,21 @@ final class Plotno {
     }
     func arc(_ x: Double, _ y: Double, _ r: Double) { ellipse(x, y, r, r) }
 
-    func fill(evenOdd: Bool = false) { g.fill(sciezka, with: .color(fillStyle), style: FillStyle(eoFill: evenOdd)) }
+    /// Rysunek „rysuje się sam” (ekran „O grze”): 0…1 — jaka część każdej kreski jest już narysowana;
+    /// kolor wypełnia kształty pod koniec. nil — zwykłe rysowanie.
+    var postep: Double?
+
+    func fill(evenOdd: Bool = false) {
+        var kolor = fillStyle
+        if let p = postep { kolor = kolor.opacity(max(0, min(1, (p - 0.55) / 0.45))) }
+        g.fill(sciezka, with: .color(kolor), style: FillStyle(eoFill: evenOdd))
+    }
     func stroke() {
+        if let p = postep, p < 1 {
+            g.stroke(sciezka.trimmedPath(from: 0, to: max(0, min(1, p / 0.7))), with: .color(strokeStyle),
+                     style: StrokeStyle(lineWidth: lineWidth, lineCap: lineCap, lineJoin: lineJoin, dash: lineDash))
+            return
+        }
         g.stroke(sciezka, with: .color(strokeStyle),
                  style: StrokeStyle(lineWidth: lineWidth, lineCap: lineCap, lineJoin: lineJoin, dash: lineDash))
     }
@@ -126,11 +139,11 @@ final class Plotno {
     }
     /// Rysowanie w osobnej warstwie (np. z filtrem), jak rysowanie na pomocniczym płótnie w grze.
     func warstwa(filtry: [GraphicsContext.Filter] = [], _ rysuj: (Plotno) -> Void) {
-        let min = minKreska, f = fillStyle, s = strokeStyle, lw = lineWidth
+        let min = minKreska, f = fillStyle, s = strokeStyle, lw = lineWidth, pp = postep
         g.drawLayer { l in
             for filtr in filtry { l.addFilter(filtr) }
             let p = Plotno(l)
-            p.minKreska = min; p.fillStyle = f; p.strokeStyle = s; p.lineWidth = lw
+            p.minKreska = min; p.fillStyle = f; p.strokeStyle = s; p.lineWidth = lw; p.postep = pp
             rysuj(p)
         }
     }

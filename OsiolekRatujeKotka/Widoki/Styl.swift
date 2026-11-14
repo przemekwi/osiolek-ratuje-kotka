@@ -117,21 +117,23 @@ struct IkonaDziecka: View {
     var kolor: Color = Kolory.napisPrzycisku
 
     var body: some View {
-        Canvas { g, size in
-            let c = Plotno(g)
-            let D = RYS["IKONY"][id]
-            wpisz(c, D["ramka"].liczby, size.width * 0.06, size.height * 0.06, size.width * 0.88, size.height * 0.88) { c2, s in
-                piorko(c2, s, 1, 2.6)
-                c2.strokeStyle = kolor
-                if let kierunek {
-                    let sr = D["srodek"].liczby, katy: [Kierunek: Double] = [.prawo: 0, .dol: .pi / 2, .lewo: .pi, .gora: -.pi / 2]
-                    c2.translate(sr[0], sr[1]); c2.rotate((katy[kierunek] ?? 0) - D["kat"].liczba); c2.translate(-sr[0], -sr[1])
-                }
-                for k in D["ksztalty"].tablica { ksztalt(c2, k.punkty, nil) }
-                for l in D["linie"].tablica { linia(c2, l.punkty) }
-                for o in D["owale"].tablica { owal(c2, o.liczby, nil) }
-            }
+        Canvas { g, size in rysujIkone(Plotno(g), size, id, kolor: kolor, kierunek: kierunek) }
+            .accessibilityHidden(true)
+    }
+}
+
+/// Ikona dziecka (strzałka, menu, album…) wpisana w prostokąt size.
+func rysujIkone(_ c: Plotno, _ size: CGSize, _ id: String, kolor: Color, kierunek: Kierunek? = nil) {
+    let D = RYS["IKONY"][id]
+    wpisz(c, D["ramka"].liczby, size.width * 0.06, size.height * 0.06, size.width * 0.88, size.height * 0.88) { c2, s in
+        piorko(c2, s, 1, 2.6)
+        c2.strokeStyle = kolor
+        if let kierunek {
+            let sr = D["srodek"].liczby, katy: [Kierunek: Double] = [.prawo: 0, .dol: .pi / 2, .lewo: .pi, .gora: -.pi / 2]
+            c2.translate(sr[0], sr[1]); c2.rotate((katy[kierunek] ?? 0) - D["kat"].liczba); c2.translate(-sr[0], -sr[1])
         }
-        .accessibilityHidden(true)
+        for k in D["ksztalty"].tablica { ksztalt(c2, k.punkty, nil) }
+        for l in D["linie"].tablica { linia(c2, l.punkty) }
+        for o in D["owale"].tablica { owal(c2, o.liczby, nil) }
     }
 }
