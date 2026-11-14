@@ -31,7 +31,7 @@ struct SzafaView: View {
                                 PodgladOsiolka()
                                     .frame(width: min(geo.size.width * 0.64, 280),
                                            height: min(geo.size.width * 0.82, 360, geo.size.height * (waski ? 0.25 : 0.44)))
-                                PaletaKolorow(rozmiar: waski ? 40 : 48, kolumny: 5)
+                                PaletaKolorow(rozmiar: waski ? 44 : 48, kolumny: 5)
                             }
                             Koszulki(maly: waski)
                         }
