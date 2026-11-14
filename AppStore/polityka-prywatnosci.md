@@ -48,7 +48,8 @@ urządzenia, a przechowuje ją Apple albo Twój komputer.
 
 ### 4. Jak usunąć zapisane dane
 
-„Nowa gra” w ustawieniach dla rodzica zaczyna grę od pierwszego poziomu i czyści album naklejek. Usunięcie
+„Nowa gra” (w menu pauzy i w ustawieniach dla rodzica) zaczyna grę od pierwszego poziomu i czyści album
+naklejek. Usunięcie
 aplikacji z urządzenia usuwa wszystkie zapisane dane.
 
 ### 5. Dzieci
@@ -123,7 +124,8 @@ settings, and Apple or your computer stores them.
 
 ### 4. How to delete saved data
 
-"New game" in the parent settings starts the game from the first level and clears the sticker album. Deleting
+"New game" (in the pause menu and in the parent settings) starts the game from the first level and clears
+the sticker album. Deleting
 the app from the device deletes all saved data.
 
 ### 5. Children

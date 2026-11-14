@@ -24,7 +24,7 @@ Właściciel: Przemysław Wilde. Rysunki: jego córka. Architektura, plan i opis
 - Poza zakresem: gra w karty „Osiołek rozsypał karty” (osobna gra), udostępnianie, PWA, wyzwania z linku,
   plansza „Widzisz krótszą drogę?” po wygranej (usunięta).
 - Menu: dla dziecka start (Graj, Album, Przebierz osiołka, Dźwięk) i menu pauzy (Graj dalej, Przebierz,
-  Album, Strzałki, Dźwięk, Wyjdź); pasek gry: Podpowiedź i Menu. Ustawienia w „Dla rodzica”:
+  Album, Strzałki, Dźwięk, Nowa gra z ostrzeżeniem bez bramki, Wyjdź); pasek gry: Podpowiedź i Menu. Ustawienia w „Dla rodzica”:
   „O grze” bez bramki; za bramką limity, wibracje, Dostęp z przewodnikiem, tryb dla dorosłych
   i rozwijane „Ustawienia gry” (muzyka, dźwięki, kolory, język, nowa gra z potwierdzeniem).
 - Bramka rodzica: mnożenie z tabliczki (6–9 × 6–9) wpisywane na klawiaturze cyfr w grze, bez podpowiedzi.
